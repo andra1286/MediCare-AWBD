@@ -1,0 +1,18 @@
+spring:
+  application:
+    name: appointment-service
+  profiles:
+    default: dev
+
+server:
+  port: 8082
+
+# Actuator exposes health/info/metrics (used for monitoring & Docker healthchecks)
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: when_authorized

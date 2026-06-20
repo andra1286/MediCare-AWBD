@@ -1,0 +1,17 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:medicare_appointment}
+    username: ${DB_USER:medicare}
+    password: ${DB_PASSWORD:medicare}
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: true
+
+# Direct URL to identity-service for dev (Feign uses this when set; otherwise Eureka lb).
+medicare:
+  identity:
+    url: ${IDENTITY_URL:}

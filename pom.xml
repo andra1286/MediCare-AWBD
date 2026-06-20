@@ -34,6 +34,7 @@
          discovery-server, identity-service, api-gateway. -->
     <modules>
         <module>common-lib</module>
+        <module>appointment-service</module>
     </modules>
 
     <dependencyManagement>
