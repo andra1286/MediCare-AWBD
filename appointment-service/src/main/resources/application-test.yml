@@ -17,3 +17,16 @@ spring:
 eureka:
   client:
     enabled: false
+
+# Unreachable identity-service URL so Feign fails fast and the resilience fallback is exercised.
+medicare:
+  identity:
+    url: http://localhost:9
+
+# Shorten retry waits so tests stay fast.
+resilience4j:
+  retry:
+    instances:
+      identity:
+        max-attempts: 2
+        wait-duration: 10ms

@@ -16,3 +16,17 @@ spring:
 eureka:
   client:
     enabled: false
+
+# Unreachable appointment-service URL so Feign fails fast and the resilience fallback is exercised.
+medicare:
+  appointment:
+    url: http://localhost:9
+  identity:
+    url: http://localhost:9
+
+resilience4j:
+  retry:
+    instances:
+      appointment:
+        max-attempts: 2
+        wait-duration: 10ms
