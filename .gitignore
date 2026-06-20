@@ -1,0 +1,42 @@
+# Maven
+target/
+!.mvn/wrapper/maven-wrapper.jar
+!**/src/main/**/target/
+!**/src/test/**/target/
+
+# IDE
+.idea/
+*.iml
+*.ipr
+*.iws
+.vscode/
+.settings/
+.project
+.classpath
+
+# OS
+.DS_Store
+
+# Logs
+logs/
+*.log
+
+# Env
+*.env
+.env
+
+# Build
+build/
+out/
+bin/
+
+# Local working / planning files (not part of the graded repo)
+docs/superpowers/
+TASKS_DEV_A.md
+TASKS_DEV_B.md
+GIT_WORKFLOW.md
+LLM_TEAM_PROMPT.md
+BUSINESS_RULES.md
+
+# Source docx / original brief
+*.docx
