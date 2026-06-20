@@ -60,3 +60,68 @@ Dacă `java`/Maven implicit nu este 21, setează `JAVA_HOME` către JDK 21 înai
 export JAVA_HOME="$(/usr/libexec/java_home -v 21)"   # macOS
 mvn clean install
 ```
+
+## Rulare locală (slice Dev B: domeniu + frontend)
+
+Serviciile de business și UI-ul pot rula independent (fără Eureka/gateway). Din rădăcina proiectului, în terminale separate:
+
+```bash
+# 1. Appointment Service (port 8082) — necesită PostgreSQL "medicare_appointment"
+mvn -pl appointment-service spring-boot:run
+
+# 2. Medical Records Service (port 8083) — necesită PostgreSQL "medicare_records" + Redis
+mvn -pl medical-records-service spring-boot:run
+
+# 3. Web UI (port 8090)
+mvn -pl web-ui spring-boot:run
+```
+
+Apoi deschide **http://localhost:8090** și autentifică-te cu unul dintre utilizatorii demo:
+
+| Utilizator | Parolă | Rol |
+|---|---|---|
+| `admin` | `admin` | ADMIN (gestionează catalogul de medicamente) |
+| `doctor` | `doctor` | DOCTOR |
+| `patient` | `patient` | PATIENT |
+
+> Pentru rulare rapidă a dependențelor locale: `docker run -p 5432:5432 -e POSTGRES_USER=medicare -e POSTGRES_PASSWORD=medicare -e POSTGRES_DB=medicare_appointment postgres:16` (similar pentru `medicare_records`) și `docker run -p 6379:6379 redis:7`. Variabilele `DB_HOST/DB_PORT/DB_NAME/REDIS_HOST` sunt configurabile.
+> Dacă identity-service / appointment-service nu rulează, apelurile Feign cad pe fallback-ul Resilience4j (mod degradat), deci UI-ul rămâne funcțional.
+
+## API REST
+
+**appointment-service** (`:8082`)
+
+| Metodă | Endpoint | Descriere |
+|---|---|---|
+| POST | `/api/appointments` | Rezervă o programare (validare + reguli BR-8/9/10) |
+| GET | `/api/appointments/{id}` | Detalii programare |
+| GET | `/api/appointments?page=&size=&sort=scheduledAt,desc` | Listă paginată + sortabilă |
+| POST | `/api/appointments/{id}/cancel` | Anulează (doar din BOOKED) |
+| POST | `/api/appointments/{id}/complete` | Finalizează (doar din BOOKED) |
+
+**medical-records-service** (`:8083`)
+
+| Metodă | Endpoint | Descriere |
+|---|---|---|
+| POST | `/api/records` | Creează fișă + rețete (BR-13/14/16/17) |
+| GET | `/api/records/{id}` | Detalii fișă |
+| GET | `/api/records?page=&size=&sort=createdAt,desc` | Listă paginată |
+| POST/GET/PUT/DELETE | `/api/medications[/{id}]` | CRUD catalog medicamente (paginat) |
+| GET | `/api/medications/all` | Tot catalogul (cache Redis) |
+
+Erorile sunt returnate uniform (`ErrorResponse`: timestamp, status, message, path, fieldErrors).
+
+## Testare
+
+```bash
+mvn verify        # rulează unit + integration tests și generează rapoarte JaCoCo
+```
+
+- Unit tests (JUnit 5 + Mockito) pe service layer: **>70%** (appointment ~97%, records ~91%).
+- Integration tests end-to-end (MockMvc + H2): rezervare→listare, rezervare→finalizare, creare fișă cu rețetă (@ManyToMany), paginare medicamente.
+- Rapoarte coverage: `*/target/site/jacoco/index.html`.
+
+## Contribuții echipă
+
+- **Dev B (andra1286)** — `common-lib`, `appointment-service`, `medical-records-service`, `web-ui` (frontend complet), comunicare Feign + Resilience4j + caching Redis, integration tests. *(implementat primul)*
+- **Dev A** — `discovery-server` (Eureka), `identity-service` (JWT issuing), `api-gateway`, Docker Compose, CI/CD. *(de implementat peste slice-ul Dev B)*
