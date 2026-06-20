@@ -60,7 +60,7 @@ Frontend modern cu temă medicală, construit cu **Thymeleaf + Bootstrap 5** (fo
 - **Validare:** server-side (Bean Validation) + client-side (HTML5) + mesaje prietenoase.
 - **Pagină de eroare** custom (404/403/500) tematizată.
 
-> Utilizatori demo: `admin/admin`, `doctor/doctor`, `patient/patient`. (Autentificarea este temporar in-memory în web-ui; Dev A o înlocuiește cu identity-service.)
+> Utilizatori demo: `admin/admin`, `doctor/doctor`, `patient/patient`.
 
 ## Cerințe de build (IMPORTANT)
 
@@ -75,9 +75,9 @@ export JAVA_HOME="$(/usr/libexec/java_home -v 21)"   # macOS
 mvn clean install
 ```
 
-## Rulare locală (slice Dev B: domeniu + frontend)
+## Rulare locală (dezvoltare)
 
-Serviciile de business și UI-ul pot rula independent (fără Eureka/gateway). Din rădăcina proiectului, în terminale separate:
+Serviciile de business și UI-ul pot rula independent. Din rădăcina proiectului, în terminale separate:
 
 ```bash
 # 1. Appointment Service (port 8082) — necesită PostgreSQL "medicare_appointment"
@@ -112,7 +112,7 @@ docker compose up --build
 Apoi deschide **http://localhost:8090** și autentifică-te (`admin/admin`, `doctor/doctor`, `patient/patient`).
 Oprire: `docker compose down` (adaugă `-v` pentru a șterge și datele).
 
-> `docker-compose.yml` acoperă slice-ul Dev B (appointment-service, medical-records-service, web-ui + Postgres + Redis). Dev A îl extinde ulterior cu discovery-server (Eureka), identity-service și api-gateway.
+> `docker-compose.yml` pornește serviciile de business (appointment, records), web-ui, PostgreSQL și Redis. Serviciile de platformă (Eureka, identity-service, API Gateway) se adaugă pe măsură ce sunt implementate.
 
 ## Rulare demo (fără Docker, fără infrastructură — H2 în memorie)
 
@@ -124,7 +124,7 @@ java -jar medical-records-service/target/medical-records-service-1.0.0.jar --spr
 java -jar web-ui/target/web-ui-1.0.0.jar   # :8090
 ```
 
-> În ambele moduri, apelurile către identity-service (încă neimplementat de Dev A) cad pe fallback-ul Resilience4j, deci aplicația rămâne complet utilizabilă.
+> În ambele moduri, apelurile către identity-service (în curs de implementare) cad pe fallback-ul Resilience4j, deci aplicația rămâne complet utilizabilă.
 
 ## API REST
 
@@ -160,26 +160,22 @@ mvn verify        # rulează unit + integration tests și generează rapoarte Ja
 - Integration tests end-to-end (MockMvc + H2): rezervare→listare, rezervare→finalizare, creare fișă cu rețetă (@ManyToMany), paginare medicamente.
 - Rapoarte coverage: `*/target/site/jacoco/index.html`.
 
-## Cerințe acoperite (status)
+## Funcționalități principale
 
-**Obligatorii (acoperite de slice-ul Dev B):**
-- ✅ Model de date — 8 entități, toate tipurile de relații (@OneToOne, @OneToMany/@ManyToOne, @ManyToMany)
-- ✅ CRUD complet — repository (Spring Data JPA) + service layer + excepții specifice (`@RestControllerAdvice`)
-- ✅ Multi-environment — profiluri `dev` (PostgreSQL) + `test` (H2), plus profil `demo` (H2)
-- ✅ Testing — unit (JUnit 5 + Mockito, >70% pe service layer) + integration (MockMvc + H2)
-- ✅ Views & validare — Thymeleaf, Bean Validation server + client, pagini de eroare custom
-- ✅ Logging — SLF4J + Logback, fișier separat pentru erori
-- ✅ Paginare & sortare — `Pageable` pe programări, fișe, medicamente (≥2 criterii)
-- ✅ Spring Security — login custom, 3 roluri, BCrypt, remember-me, CSRF (în web-ui)
-
-**Opționale (acoperite de slice-ul Dev B):**
-- ✅ Resilience4j — circuit breaker + retry + fallback între servicii
-- ✅ NoSQL & caching — Redis (catalog medicamente)
-- 🐳 Docker Compose — servicii business + Postgres + Redis (extins de Dev A)
-
-**De implementat de Dev A:** Service Discovery (Eureka), API Gateway, Distributed JWT (identity-service), Load Balancing, CI/CD — vezi `TASKS_DEV_A.md`.
+- **Model de date bogat** — 8 entități cu toate tipurile de relații JPA (`@OneToOne`, `@OneToMany`/`@ManyToOne`, `@ManyToMany`).
+- **CRUD complet** cu Spring Data JPA, service layer și tratare specifică a excepțiilor (`@RestControllerAdvice` + `ErrorResponse` uniform).
+- **Reguli de business** pentru programări și fișe medicale (vezi `BUSINESS_RULES.md`).
+- **Comunicare între microservicii** prin OpenFeign, rezilientă cu Resilience4j (circuit breaker + retry + fallback).
+- **Caching** cu Redis pentru datele citite frecvent (catalog de medicamente).
+- **Frontend modern** Thymeleaf + Bootstrap 5 (homepage hero, listă programări tip timeline, fișe în acordeon, grilă de medicamente), cu validare și pagini de eroare custom.
+- **Securitate** — login, 3 roluri (ADMIN/DOCTOR/PATIENT), BCrypt, remember-me, CSRF, autorizare pe rol.
+- **Paginare și sortare** pe listele principale (≥2 criterii), configurabile.
+- **Multi-environment** — profiluri `dev` (PostgreSQL), `test` (H2) și `demo` (H2, rulare fără infrastructură).
+- **Logging** SLF4J + Logback, cu fișier separat pentru erori.
+- **Containerizare** — `docker-compose` pentru servicii + PostgreSQL + Redis.
+- **Testare** — teste unitare (JUnit 5 + Mockito, >70% pe service layer) și de integrare (MockMvc + H2).
 
 ## Contribuții echipă
 
-- **Dev B (andra1286)** — `common-lib`, `appointment-service`, `medical-records-service`, `web-ui` (frontend modern complet), comunicare Feign + Resilience4j + caching Redis, integration tests, **profil `demo` (H2)** și **`docker-compose` de bază** (Postgres + Redis + servicii). *(implementat primul)*
-- **Dev A** — `discovery-server` (Eureka), `identity-service` (autentificare + emitere JWT), `api-gateway`, extinderea `docker-compose` cu serviciile de platformă, CI/CD. *(de implementat peste slice-ul Dev B)*
+- **andra1286** — `common-lib`, `appointment-service`, `medical-records-service`, `web-ui` (frontend), comunicare Feign + Resilience4j + caching Redis, teste de integrare, profil `demo`, `docker-compose`.
+- *(membru 2 — de completat pe măsură ce contribuie)*
