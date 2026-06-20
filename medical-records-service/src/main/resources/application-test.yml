@@ -10,3 +10,9 @@ spring:
     properties:
       hibernate:
         dialect: org.hibernate.dialect.H2Dialect
+  cache:
+    type: simple
+
+eureka:
+  client:
+    enabled: false

@@ -1,5 +1,6 @@
 package com.medicare.appointment.service;
 
+import com.medicare.appointment.client.IdentityGateway;
 import com.medicare.appointment.domain.Appointment;
 import com.medicare.appointment.domain.AppointmentStatus;
 import com.medicare.appointment.dto.CreateAppointmentRequest;
@@ -28,6 +29,9 @@ class AppointmentServiceTest {
 
     @Mock
     private AppointmentRepository repository;
+
+    @Mock
+    private IdentityGateway identityGateway;
 
     @InjectMocks
     private AppointmentService service;

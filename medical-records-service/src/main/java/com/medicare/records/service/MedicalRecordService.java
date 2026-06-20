@@ -4,6 +4,7 @@ import com.medicare.common.dto.PageResponse;
 import com.medicare.common.exception.BusinessRuleException;
 import com.medicare.common.exception.DuplicateResourceException;
 import com.medicare.common.exception.ResourceNotFoundException;
+import com.medicare.records.client.AppointmentGateway;
 import com.medicare.records.domain.MedicalRecord;
 import com.medicare.records.domain.Medication;
 import com.medicare.records.domain.Prescription;
@@ -37,6 +38,7 @@ public class MedicalRecordService {
 
     private final MedicalRecordRepository recordRepository;
     private final MedicationRepository medicationRepository;
+    private final AppointmentGateway appointmentGateway;
 
     @Transactional
     public MedicalRecordDto create(CreateMedicalRecordRequest request) {
@@ -44,6 +46,8 @@ public class MedicalRecordService {
             throw new DuplicateResourceException(
                     "A medical record already exists for appointment " + request.getAppointmentId());
         }
+        // BR-13: the appointment must be COMPLETED (fail-open if appointment-service is unreachable).
+        appointmentGateway.verifyCompleted(request.getAppointmentId());
 
         MedicalRecord record = MedicalRecord.builder()
                 .appointmentId(request.getAppointmentId())

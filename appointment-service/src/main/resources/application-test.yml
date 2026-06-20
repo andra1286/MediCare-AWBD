@@ -10,3 +10,10 @@ spring:
     properties:
       hibernate:
         dialect: org.hibernate.dialect.H2Dialect
+  # Tests use a simple in-memory cache and no Eureka/Redis.
+  cache:
+    type: simple
+
+eureka:
+  client:
+    enabled: false

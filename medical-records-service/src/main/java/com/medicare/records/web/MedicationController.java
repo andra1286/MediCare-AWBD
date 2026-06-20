@@ -37,6 +37,12 @@ public class MedicationController {
         return service.getById(id);
     }
 
+    /** Whole catalog (cached in Redis) — handy for UI dropdowns. */
+    @GetMapping("/all")
+    public java.util.List<MedicationDto> listAll() {
+        return service.listAll();
+    }
+
     /** Paginated + sortable (e.g. ?page=0&size=10&sort=name,asc&sort=atcCode). */
     @GetMapping
     public PageResponse<MedicationDto> list(

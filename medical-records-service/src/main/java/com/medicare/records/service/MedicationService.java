@@ -10,10 +10,15 @@ import com.medicare.records.repository.MedicationRepository;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
 
 /** CRUD for the medication catalog. */
 @Service
@@ -24,6 +29,20 @@ public class MedicationService {
 
     private final MedicationRepository repository;
 
+    /**
+     * The whole catalog, cached in Redis (rule BR-19 — frequently read, rarely changed).
+     * Used by the UI for medication dropdowns. Evicted on any catalog change.
+     */
+    @Cacheable("medications")
+    @Transactional(readOnly = true)
+    public List<MedicationDto> listAll() {
+        log.debug("Loading medication catalog from database (cache miss)");
+        return repository.findAll(Sort.by("name")).stream()
+                .map(RecordMapper::toDto)
+                .toList();
+    }
+
+    @CacheEvict(value = "medications", allEntries = true)
     @Transactional
     public MedicationDto create(CreateMedicationRequest request) {
         if (repository.existsByName(request.getName())) {
@@ -49,6 +68,7 @@ public class MedicationService {
         return PageResponse.from(page);
     }
 
+    @CacheEvict(value = "medications", allEntries = true)
     @Transactional
     public MedicationDto update(Long id, CreateMedicationRequest request) {
         Medication medication = findEntity(id);
@@ -58,6 +78,7 @@ public class MedicationService {
         return RecordMapper.toDto(repository.save(medication));
     }
 
+    @CacheEvict(value = "medications", allEntries = true)
     @Transactional
     public void delete(Long id) {
         Medication medication = findEntity(id);

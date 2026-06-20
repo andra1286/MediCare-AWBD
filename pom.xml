@@ -26,6 +26,7 @@
         <jjwt.version>0.12.6</jjwt.version>
         <springdoc.version>2.6.0</springdoc.version>
         <jacoco.version>0.8.12</jacoco.version>
+        <resilience4j.version>2.2.0</resilience4j.version>
     </properties>
 
     <!-- Modules built in the current (Dev B) slice + shared foundation.

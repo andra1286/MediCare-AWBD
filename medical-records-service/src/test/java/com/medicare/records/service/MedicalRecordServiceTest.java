@@ -3,6 +3,7 @@ package com.medicare.records.service;
 import com.medicare.common.exception.BusinessRuleException;
 import com.medicare.common.exception.DuplicateResourceException;
 import com.medicare.common.exception.ResourceNotFoundException;
+import com.medicare.records.client.AppointmentGateway;
 import com.medicare.records.domain.MedicalRecord;
 import com.medicare.records.domain.Medication;
 import com.medicare.records.dto.CreateMedicalRecordRequest;
@@ -34,6 +35,9 @@ class MedicalRecordServiceTest {
 
     @Mock
     private MedicationRepository medicationRepository;
+
+    @Mock
+    private AppointmentGateway appointmentGateway;
 
     @InjectMocks
     private MedicalRecordService service;

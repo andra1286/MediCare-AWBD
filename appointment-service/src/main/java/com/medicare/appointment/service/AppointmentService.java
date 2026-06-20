@@ -1,5 +1,6 @@
 package com.medicare.appointment.service;
 
+import com.medicare.appointment.client.IdentityGateway;
 import com.medicare.appointment.domain.Appointment;
 import com.medicare.appointment.domain.AppointmentStatus;
 import com.medicare.appointment.dto.CreateAppointmentRequest;
@@ -29,13 +30,16 @@ public class AppointmentService {
     private static final Logger log = LoggerFactory.getLogger(AppointmentService.class);
 
     private final AppointmentRepository repository;
+    private final IdentityGateway identityGateway;
 
-    /** Book a new appointment (rules BR-8 no past date, BR-9 no double-booking). */
+    /** Book a new appointment (rules BR-8 no past date, BR-10 valid users, BR-9 no double-booking). */
     @Transactional
     public AppointmentDto book(CreateAppointmentRequest request) {
         if (request.getScheduledAt().isBefore(LocalDateTime.now())) {
             throw new BusinessRuleException("Cannot book an appointment in the past");
         }
+        // BR-10: verify doctor & patient via identity-service (fail-open if it is unreachable).
+        identityGateway.validateForBooking(request.getDoctorId(), request.getPatientId());
         if (repository.existsByDoctorIdAndScheduledAt(request.getDoctorId(), request.getScheduledAt())) {
             throw new BusinessRuleException("Doctor already has an appointment at this time");
         }
