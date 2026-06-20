@@ -87,6 +87,31 @@ Apoi deschide **http://localhost:8090** și autentifică-te cu unul dintre utili
 > Pentru rulare rapidă a dependențelor locale: `docker run -p 5432:5432 -e POSTGRES_USER=medicare -e POSTGRES_PASSWORD=medicare -e POSTGRES_DB=medicare_appointment postgres:16` (similar pentru `medicare_records`) și `docker run -p 6379:6379 redis:7`. Variabilele `DB_HOST/DB_PORT/DB_NAME/REDIS_HOST` sunt configurabile.
 > Dacă identity-service / appointment-service nu rulează, apelurile Feign cad pe fallback-ul Resilience4j (mod degradat), deci UI-ul rămâne funcțional.
 
+## Rulare cu Docker Compose (recomandat)
+
+Pornește întreaga aplicație (PostgreSQL + Redis + cele 3 servicii) cu o singură comandă — necesită doar Docker:
+
+```bash
+docker compose up --build
+```
+
+Apoi deschide **http://localhost:8090** și autentifică-te (`admin/admin`, `doctor/doctor`, `patient/patient`).
+Oprire: `docker compose down` (adaugă `-v` pentru a șterge și datele).
+
+> `docker-compose.yml` acoperă slice-ul Dev B (appointment-service, medical-records-service, web-ui + Postgres + Redis). Dev A îl extinde ulterior cu discovery-server (Eureka), identity-service și api-gateway.
+
+## Rulare demo (fără Docker, fără infrastructură — H2 în memorie)
+
+Pentru a porni rapid fără Docker/PostgreSQL/Redis, folosește profilul `demo` (H2 în memorie, cache simplu, fără Eureka). După `mvn clean package`, în terminale separate:
+
+```bash
+java -jar appointment-service/target/appointment-service-1.0.0.jar --spring.profiles.active=demo   # :8082
+java -jar medical-records-service/target/medical-records-service-1.0.0.jar --spring.profiles.active=demo  # :8083  (pornește-l după appointment-service)
+java -jar web-ui/target/web-ui-1.0.0.jar   # :8090
+```
+
+> În ambele moduri, apelurile către identity-service (încă neimplementat de Dev A) cad pe fallback-ul Resilience4j, deci aplicația rămâne complet utilizabilă.
+
 ## API REST
 
 **appointment-service** (`:8082`)

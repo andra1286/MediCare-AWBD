@@ -1,0 +1,89 @@
+# MediCare — Dev B slice (domain services + UI) on real PostgreSQL + Redis.
+# Dev A extends this later with discovery-server (Eureka), identity-service and api-gateway.
+#
+#   docker compose up --build
+#   open http://localhost:8090   (admin/admin, doctor/doctor, patient/patient)
+
+services:
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: medicare
+      POSTGRES_PASSWORD: medicare
+      POSTGRES_DB: medicare_appointment
+    volumes:
+      - ./docker/postgres-init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U medicare"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  redis:
+    image: redis:7
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  appointment-service:
+    build:
+      context: .
+      dockerfile: appointment-service/Dockerfile
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: medicare_appointment
+      DB_USER: medicare
+      DB_PASSWORD: medicare
+      REDIS_HOST: redis
+      CACHE_TYPE: redis
+      EUREKA_ENABLED: "false"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    ports:
+      - "8082:8082"
+
+  medical-records-service:
+    build:
+      context: .
+      dockerfile: medical-records-service/Dockerfile
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: medicare_records
+      DB_USER: medicare
+      DB_PASSWORD: medicare
+      REDIS_HOST: redis
+      CACHE_TYPE: redis
+      EUREKA_ENABLED: "false"
+      # talk directly to appointment-service (rule BR-13 works live)
+      APPOINTMENT_URL: http://appointment-service:8082
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    ports:
+      - "8083:8083"
+
+  web-ui:
+    build:
+      context: .
+      dockerfile: web-ui/Dockerfile
+    environment:
+      APPOINTMENT_URL: http://appointment-service:8082
+      RECORDS_URL: http://medical-records-service:8083
+    depends_on:
+      - appointment-service
+      - medical-records-service
+    ports:
+      - "8090:8090"
