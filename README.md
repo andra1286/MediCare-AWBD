@@ -9,7 +9,7 @@ Trecerea de la un monolit la arhitectura distribuită se va face prin spargerea 
 1. **Gestiunea utilizatorilor (CRUD):** Crearea, citirea, actualizarea și ștergerea profilurilor pentru medici și pacienți.
 2. **Securitate și autorizare:** Autentificare securizată și protejarea endpoint-urilor pe baza a minimum două roluri (ADMIN, DOCTOR, PATIENT).
 3. **Gestiunea programărilor:** Pacienții pot vizualiza medicii disponibili și pot rezerva sau anula programări.
-4. **Istoric Mmdical și rețete:** Medicii pot crea fișe medicale asociate unei programări finalizate și pot emite rețete conținând mai multe medicamente.
+4. **Istoric Medical și rețete:** Medicii pot crea fișe medicale asociate unei programări finalizate și pot emite rețete conținând mai multe medicamente.
 5. **Paginare și sortare:** Navigarea prin listele lungi (ex: lista de programări, lista de pacienți) va fi paginată și sortabilă după minim 2 criterii.
 
 ## Modelul de date (ERD)
@@ -47,6 +47,20 @@ erDiagram
 | `medical-records-service` | 8083 | Fișe medicale, rețete, medicamente |
 
 Fiecare microserviciu are propria schemă de bază de date; referințele între servicii se fac prin ID (fără join-uri JPA între servicii). JWT-ul este validat local în fiecare serviciu folosind `common-lib`.
+
+## Interfață utilizator (web-ui)
+
+Frontend modern cu temă medicală, construit cu **Thymeleaf + Bootstrap 5** (font Inter, Bootstrap Icons), găzduit ca aplicație separată (`web-ui`, port 8090):
+
+- **Homepage** cu secțiune *hero* medicală și carduri pentru cele 3 module.
+- **Programări** — afișare tip *timeline* (carduri cu bandă colorată după status: BOOKED/COMPLETED/CANCELLED), sortare și paginare.
+- **Fișe medicale** — carduri *acordeon* care se extind și arată rețetele + medicamentele inline.
+- **Medicamente** — grilă de carduri; acțiunile de editare/ștergere apar doar pentru ADMIN.
+- **Securitate UI:** pagină de login custom, 3 roluri (ADMIN/DOCTOR/PATIENT), parole **BCrypt**, **remember-me**, **CSRF**, logout, autorizare pe rol.
+- **Validare:** server-side (Bean Validation) + client-side (HTML5) + mesaje prietenoase.
+- **Pagină de eroare** custom (404/403/500) tematizată.
+
+> Utilizatori demo: `admin/admin`, `doctor/doctor`, `patient/patient`. (Autentificarea este temporar in-memory în web-ui; Dev A o înlocuiește cu identity-service.)
 
 ## Cerințe de build (IMPORTANT)
 
@@ -146,7 +160,26 @@ mvn verify        # rulează unit + integration tests și generează rapoarte Ja
 - Integration tests end-to-end (MockMvc + H2): rezervare→listare, rezervare→finalizare, creare fișă cu rețetă (@ManyToMany), paginare medicamente.
 - Rapoarte coverage: `*/target/site/jacoco/index.html`.
 
+## Cerințe acoperite (status)
+
+**Obligatorii (acoperite de slice-ul Dev B):**
+- ✅ Model de date — 8 entități, toate tipurile de relații (@OneToOne, @OneToMany/@ManyToOne, @ManyToMany)
+- ✅ CRUD complet — repository (Spring Data JPA) + service layer + excepții specifice (`@RestControllerAdvice`)
+- ✅ Multi-environment — profiluri `dev` (PostgreSQL) + `test` (H2), plus profil `demo` (H2)
+- ✅ Testing — unit (JUnit 5 + Mockito, >70% pe service layer) + integration (MockMvc + H2)
+- ✅ Views & validare — Thymeleaf, Bean Validation server + client, pagini de eroare custom
+- ✅ Logging — SLF4J + Logback, fișier separat pentru erori
+- ✅ Paginare & sortare — `Pageable` pe programări, fișe, medicamente (≥2 criterii)
+- ✅ Spring Security — login custom, 3 roluri, BCrypt, remember-me, CSRF (în web-ui)
+
+**Opționale (acoperite de slice-ul Dev B):**
+- ✅ Resilience4j — circuit breaker + retry + fallback între servicii
+- ✅ NoSQL & caching — Redis (catalog medicamente)
+- 🐳 Docker Compose — servicii business + Postgres + Redis (extins de Dev A)
+
+**De implementat de Dev A:** Service Discovery (Eureka), API Gateway, Distributed JWT (identity-service), Load Balancing, CI/CD — vezi `TASKS_DEV_A.md`.
+
 ## Contribuții echipă
 
-- **Dev B (andra1286)** — `common-lib`, `appointment-service`, `medical-records-service`, `web-ui` (frontend complet), comunicare Feign + Resilience4j + caching Redis, integration tests. *(implementat primul)*
-- **Dev A** — `discovery-server` (Eureka), `identity-service` (JWT issuing), `api-gateway`, Docker Compose, CI/CD. *(de implementat peste slice-ul Dev B)*
+- **Dev B (andra1286)** — `common-lib`, `appointment-service`, `medical-records-service`, `web-ui` (frontend modern complet), comunicare Feign + Resilience4j + caching Redis, integration tests, **profil `demo` (H2)** și **`docker-compose` de bază** (Postgres + Redis + servicii). *(implementat primul)*
+- **Dev A** — `discovery-server` (Eureka), `identity-service` (autentificare + emitere JWT), `api-gateway`, extinderea `docker-compose` cu serviciile de platformă, CI/CD. *(de implementat peste slice-ul Dev B)*
