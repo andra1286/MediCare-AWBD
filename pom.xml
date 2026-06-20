@@ -35,6 +35,7 @@
     <modules>
         <module>common-lib</module>
         <module>appointment-service</module>
+        <module>medical-records-service</module>
     </modules>
 
     <dependencyManagement>

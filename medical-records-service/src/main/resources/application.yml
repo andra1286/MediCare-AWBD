@@ -1,0 +1,17 @@
+spring:
+  application:
+    name: medical-records-service
+  profiles:
+    default: dev
+
+server:
+  port: 8083
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: when_authorized
