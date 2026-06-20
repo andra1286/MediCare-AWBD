@@ -1,38 +1,54 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
-<head th:replace="~{fragments/fragments :: head('Dashboard - MediCare')}"></head>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head th:replace="~{fragments/fragments :: head('MediCare - Dashboard')}"></head>
 <body>
-<nav th:replace="~{fragments/fragments :: navbar}"></nav>
+<nav th:replace="~{fragments/fragments :: navbar('')}"></nav>
 <div th:replace="~{fragments/fragments :: alerts}"></div>
 
 <div class="container">
-    <h2 class="mb-4">Welcome to MediCare</h2>
-    <div class="row g-3">
+
+    <!-- Hero -->
+    <section class="mc-hero mb-4">
+        <i class="bi bi-heart-pulse-fill"></i>
+        <p class="mb-2"><span class="badge bg-light text-dark">Welcome back,
+            <span sec:authentication="name">user</span></span></p>
+        <h1 class="mb-3">Care, coordinated.</h1>
+        <p class="mb-4">MediCare brings appointments, medical records and prescriptions together
+            in one clean, secure clinic platform.</p>
+        <a class="btn btn-light btn-lg" th:href="@{/appointments/new}">
+            <i class="bi bi-calendar2-plus"></i> Book an appointment</a>
+        <a class="btn btn-outline-light btn-lg ms-2" th:href="@{/records}">
+            <i class="bi bi-file-medical"></i> View records</a>
+    </section>
+
+    <!-- Feature cards -->
+    <div class="row g-4 mb-2">
         <div class="col-md-4">
-            <div class="card h-100">
-                <div class="card-body">
-                    <h5 class="card-title">📅 Appointments</h5>
-                    <p class="card-text">Book, cancel and complete medical appointments.</p>
-                    <a class="btn btn-primary" th:href="@{/appointments}">Open</a>
-                </div>
+            <div class="mc-feature p-4 h-100">
+                <div class="icon icon-blue mb-3"><i class="bi bi-calendar2-check"></i></div>
+                <h5 class="fw-bold">Appointments</h5>
+                <p class="mc-page-sub mb-3">Book, cancel and complete appointments with built-in
+                    scheduling rules.</p>
+                <a class="btn btn-outline-primary" th:href="@{/appointments}">Open <i class="bi bi-arrow-right"></i></a>
             </div>
         </div>
         <div class="col-md-4">
-            <div class="card h-100">
-                <div class="card-body">
-                    <h5 class="card-title">📋 Medical Records</h5>
-                    <p class="card-text">Create and review consultation records and prescriptions.</p>
-                    <a class="btn btn-primary" th:href="@{/records}">Open</a>
-                </div>
+            <div class="mc-feature p-4 h-100">
+                <div class="icon icon-teal mb-3"><i class="bi bi-file-medical"></i></div>
+                <h5 class="fw-bold">Medical Records</h5>
+                <p class="mc-page-sub mb-3">Document consultations and issue prescriptions linked to
+                    a patient's history.</p>
+                <a class="btn btn-outline-primary" th:href="@{/records}">Open <i class="bi bi-arrow-right"></i></a>
             </div>
         </div>
         <div class="col-md-4">
-            <div class="card h-100">
-                <div class="card-body">
-                    <h5 class="card-title">💊 Medications</h5>
-                    <p class="card-text">Browse the medication catalog (admins can edit it).</p>
-                    <a class="btn btn-primary" th:href="@{/medications}">Open</a>
-                </div>
+            <div class="mc-feature p-4 h-100">
+                <div class="icon icon-violet mb-3"><i class="bi bi-capsule"></i></div>
+                <h5 class="fw-bold">Medications</h5>
+                <p class="mc-page-sub mb-3">Browse the medication catalog used in prescriptions
+                    (admins manage entries).</p>
+                <a class="btn btn-outline-primary" th:href="@{/medications}">Open <i class="bi bi-arrow-right"></i></a>
             </div>
         </div>
     </div>

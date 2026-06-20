@@ -2,13 +2,16 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head th:replace="~{fragments/fragments :: head('Record - MediCare')}"></head>
 <body>
-<nav th:replace="~{fragments/fragments :: navbar}"></nav>
+<nav th:replace="~{fragments/fragments :: navbar('records')}"></nav>
 <div th:replace="~{fragments/fragments :: alerts}"></div>
 
 <div class="container" style="max-width: 720px;">
-    <h2 class="mb-4">Medical record #<span th:text="${record.id}"></span></h2>
+    <h2 class="mc-page-title mb-4">
+        <i class="bi bi-clipboard2-pulse text-primary"></i> Medical record #<span th:text="${record.id}"></span>
+    </h2>
 
-    <dl class="row">
+    <div class="mc-card p-4">
+    <dl class="row mb-0">
         <dt class="col-sm-3">Appointment</dt><dd class="col-sm-9" th:text="${record.appointmentId}"></dd>
         <dt class="col-sm-3">Doctor</dt><dd class="col-sm-9" th:text="${record.doctorId}"></dd>
         <dt class="col-sm-3">Patient</dt><dd class="col-sm-9" th:text="${record.patientId}"></dd>
@@ -17,25 +20,25 @@
         <dt class="col-sm-3">Created</dt>
         <dd class="col-sm-9" th:text="${#temporals.format(record.createdAt, 'yyyy-MM-dd HH:mm')}"></dd>
     </dl>
+    </div>
 
-    <h4>Prescriptions</h4>
-    <div th:if="${record.prescriptions == null or record.prescriptions.isEmpty()}" class="text-muted">
+    <h4 class="mc-page-title mt-4 mb-3"><i class="bi bi-prescription2 text-primary"></i> Prescriptions</h4>
+    <div th:if="${record.prescriptions == null or record.prescriptions.isEmpty()}" class="text-muted mb-3">
         No prescriptions.
     </div>
-    <div th:each="p : ${record.prescriptions}" class="card mb-2">
-        <div class="card-body">
-            <p class="mb-1"><strong>Instructions:</strong> <span th:text="${p.instructions}"></span></p>
-            <p class="mb-1"><strong>Issued:</strong>
-                <span th:text="${#temporals.format(p.issuedAt, 'yyyy-MM-dd HH:mm')}"></span></p>
-            <strong>Medications:</strong>
-            <ul class="mb-0">
-                <li th:each="m : ${p.medications}"
-                    th:text="${m.name + (m.dosageForm != null ? ' - ' + m.dosageForm : '')}"></li>
-            </ul>
+    <div th:each="p : ${record.prescriptions}" class="mc-card p-3 mb-2">
+        <p class="mb-1"><strong>Instructions:</strong> <span th:text="${p.instructions}"></span></p>
+        <p class="mb-2 text-muted small">Issued
+            <span th:text="${#temporals.format(p.issuedAt, 'yyyy-MM-dd HH:mm')}"></span></p>
+        <div class="d-flex gap-2 flex-wrap">
+            <span class="chip" th:each="m : ${p.medications}">
+                <i class="bi bi-capsule"></i>
+                <span th:text="${m.name + (m.dosageForm != null ? ' · ' + m.dosageForm : '')}"></span>
+            </span>
         </div>
     </div>
 
-    <a class="btn btn-secondary mt-3" th:href="@{/records}">Back</a>
+    <a class="btn btn-light mt-3" th:href="@{/records}"><i class="bi bi-arrow-left"></i> Back</a>
 </div>
 <th:block th:replace="~{fragments/fragments :: scripts}"></th:block>
 </body>

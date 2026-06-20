@@ -2,12 +2,14 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head th:replace="~{fragments/fragments :: head('New record - MediCare')}"></head>
 <body>
-<nav th:replace="~{fragments/fragments :: navbar}"></nav>
+<nav th:replace="~{fragments/fragments :: navbar('records')}"></nav>
 <div th:replace="~{fragments/fragments :: alerts}"></div>
 
 <div class="container" style="max-width: 720px;">
-    <h2 class="mb-4">New medical record</h2>
+    <h2 class="mc-page-title mb-1"><i class="bi bi-file-earmark-medical text-primary"></i> New medical record</h2>
+    <p class="mc-page-sub mb-4">Document a completed consultation and optionally add a prescription.</p>
 
+    <div class="mc-card p-4">
     <form th:action="@{/records}" th:object="${medicalRecordForm}" method="post" novalidate>
         <div class="row">
             <div class="col-md-4 mb-3">
@@ -63,9 +65,10 @@
                    placeholder="e.g. One tablet twice a day after meals"/>
         </div>
 
-        <button class="btn btn-primary" type="submit">Create record</button>
-        <a class="btn btn-secondary" th:href="@{/records}">Cancel</a>
+        <button class="btn btn-primary" type="submit"><i class="bi bi-check2"></i> Create record</button>
+        <a class="btn btn-light" th:href="@{/records}">Cancel</a>
     </form>
+    </div>
 </div>
 <th:block th:replace="~{fragments/fragments :: scripts}"></th:block>
 </body>

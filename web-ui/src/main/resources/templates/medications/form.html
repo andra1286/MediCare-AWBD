@@ -2,12 +2,16 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head th:replace="~{fragments/fragments :: head('Medication - MediCare')}"></head>
 <body>
-<nav th:replace="~{fragments/fragments :: navbar}"></nav>
+<nav th:replace="~{fragments/fragments :: navbar('medications')}"></nav>
 <div th:replace="~{fragments/fragments :: alerts}"></div>
 
 <div class="container" style="max-width: 640px;">
-    <h2 class="mb-4" th:text="${editId != null} ? 'Edit medication' : 'New medication'">Medication</h2>
+    <h2 class="mc-page-title mb-4">
+        <i class="bi bi-capsule text-primary"></i>
+        <span th:text="${editId != null} ? 'Edit medication' : 'New medication'">Medication</span>
+    </h2>
 
+    <div class="mc-card p-4">
     <form th:object="${medicationForm}" method="post" novalidate
           th:action="${editId != null} ? @{'/medications/' + ${editId}} : @{/medications}">
         <div class="mb-3">
@@ -26,9 +30,10 @@
             <input class="form-control" id="atcCode" th:field="*{atcCode}" maxlength="20"
                    placeholder="e.g. N02BA01"/>
         </div>
-        <button class="btn btn-primary" type="submit">Save</button>
-        <a class="btn btn-secondary" th:href="@{/medications}">Cancel</a>
+        <button class="btn btn-primary" type="submit"><i class="bi bi-check2"></i> Save</button>
+        <a class="btn btn-light" th:href="@{/medications}">Cancel</a>
     </form>
+    </div>
 </div>
 <th:block th:replace="~{fragments/fragments :: scripts}"></th:block>
 </body>
