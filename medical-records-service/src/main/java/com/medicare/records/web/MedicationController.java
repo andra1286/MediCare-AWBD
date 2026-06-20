@@ -19,6 +19,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.List;
+
 /** REST API for the medication catalog. */
 @RestController
 @RequestMapping("/api/medications")
@@ -39,7 +41,7 @@ public class MedicationController {
 
     /** Whole catalog (cached in Redis) — handy for UI dropdowns. */
     @GetMapping("/all")
-    public java.util.List<MedicationDto> listAll() {
+    public List<MedicationDto> listAll() {
         return service.listAll();
     }
 
