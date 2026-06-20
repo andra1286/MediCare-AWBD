@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/fragments :: head('Appointments - MediCare')}"></head>
+<body>
+<nav th:replace="~{fragments/fragments :: navbar('appointments')}"></nav>
+<div th:replace="~{fragments/fragments :: alerts}"></div>
+
+<div class="container">
+    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+        <div>
+            <h2 class="mc-page-title mb-0"><i class="bi bi-calendar2-check text-primary"></i> Appointments</h2>
+            <span class="mc-page-sub">Scheduling with built-in clinical rules</span>
+        </div>
+        <div class="d-flex gap-2">
+            <div class="dropdown">
+                <button class="btn btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown">
+                    <i class="bi bi-sort-down"></i> Sort
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end">
+                    <li><a class="dropdown-item" th:href="@{/appointments(sort='scheduledAt,desc',size=${size})}">Newest first</a></li>
+                    <li><a class="dropdown-item" th:href="@{/appointments(sort='scheduledAt,asc',size=${size})}">Oldest first</a></li>
+                    <li><a class="dropdown-item" th:href="@{/appointments(sort='status,asc',size=${size})}">By status</a></li>
+                </ul>
+            </div>
+            <a class="btn btn-primary" th:href="@{/appointments/new}"><i class="bi bi-plus-lg"></i> Book</a>
+        </div>
+    </div>
+
+    <div th:if="${page.content.isEmpty()}" class="empty-state mc-card">
+        <i class="bi bi-calendar2-x d-block"></i>
+        <p class="mt-2 mb-0">No appointments yet. Click <strong>Book</strong> to create one.</p>
+    </div>
+
+    <div th:each="a : ${page.content}" th:class="'appt-card s-' + ${a.status}">
+        <div class="appt-date">
+            <div class="d" th:text="${#temporals.format(a.scheduledAt, 'dd')}">01</div>
+            <div class="m" th:text="${#temporals.format(a.scheduledAt, 'MMM')}">JAN</div>
+        </div>
+        <div class="appt-meta">
+            <div class="d-flex align-items-center gap-2 mb-1">
+                <strong th:text="${#temporals.format(a.scheduledAt, 'HH:mm')}">10:00</strong>
+                <span th:class="'status-pill status-' + ${a.status}" th:text="${a.status}">BOOKED</span>
+            </div>
+            <div class="d-flex gap-2 flex-wrap">
+                <span class="chip"><i class="bi bi-person-badge"></i> Doctor #<span th:text="${a.doctorId}"></span></span>
+                <span class="chip"><i class="bi bi-person"></i> Patient #<span th:text="${a.patientId}"></span></span>
+                <span class="chip" th:if="${a.reason}" th:text="${a.reason}"></span>
+            </div>
+        </div>
+        <div th:if="${a.status == 'BOOKED'}" class="d-flex gap-2">
+            <form th:action="@{'/appointments/' + ${a.id} + '/complete'}" method="post">
+                <button class="btn btn-sm btn-outline-primary"><i class="bi bi-check2-circle"></i> Complete</button>
+            </form>
+            <form th:action="@{'/appointments/' + ${a.id} + '/cancel'}" method="post">
+                <button class="btn btn-sm btn-outline-danger"><i class="bi bi-x-circle"></i> Cancel</button>
+            </form>
+        </div>
+    </div>
+
+    <nav th:replace="~{fragments/fragments :: pagination(${page}, '/appointments', ${sort}, ${size})}"></nav>
+</div>
+<th:block th:replace="~{fragments/fragments :: scripts}"></th:block>
+</body>
+</html>

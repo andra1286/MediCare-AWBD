@@ -1,0 +1,165 @@
+/* ===== MediCare modern medical theme ===== */
+:root {
+    --mc-teal: #0d9488;
+    --mc-teal-dark: #0f766e;
+    --mc-blue: #0ea5e9;
+    --mc-ink: #0f172a;
+    --mc-muted: #64748b;
+    --mc-bg: #f1f5f9;
+    --mc-card: #ffffff;
+    --mc-ring: rgba(13, 148, 136, .15);
+    --mc-shadow: 0 10px 30px -12px rgba(15, 23, 42, .18);
+    --mc-radius: 16px;
+}
+
+* { box-sizing: border-box; }
+
+body {
+    font-family: 'Inter', system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    background: var(--mc-bg);
+    color: var(--mc-ink);
+}
+
+/* ---- Navbar ---- */
+.mc-navbar {
+    background: rgba(255, 255, 255, .85);
+    backdrop-filter: saturate(160%) blur(10px);
+    border-bottom: 1px solid #e2e8f0;
+    box-shadow: 0 1px 0 rgba(15, 23, 42, .03);
+}
+.mc-navbar .navbar-brand {
+    font-weight: 800;
+    letter-spacing: -.02em;
+    color: var(--mc-teal-dark);
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+}
+.mc-navbar .nav-link {
+    font-weight: 600;
+    color: #334155;
+    border-radius: 10px;
+    padding: .45rem .85rem !important;
+    display: flex;
+    align-items: center;
+    gap: .4rem;
+}
+.mc-navbar .nav-link:hover { background: var(--mc-ring); color: var(--mc-teal-dark); }
+.mc-navbar .nav-link.active { background: var(--mc-teal); color: #fff; }
+.mc-userchip {
+    background: #ecfeff;
+    color: #0e7490;
+    border-radius: 999px;
+    padding: .3rem .8rem;
+    font-size: .8rem;
+    font-weight: 600;
+}
+
+/* ---- Buttons ---- */
+.btn { border-radius: 10px; font-weight: 600; }
+.btn-primary { background: var(--mc-teal); border-color: var(--mc-teal); }
+.btn-primary:hover { background: var(--mc-teal-dark); border-color: var(--mc-teal-dark); }
+.btn-outline-primary { color: var(--mc-teal-dark); border-color: var(--mc-teal); }
+.btn-outline-primary:hover { background: var(--mc-teal); border-color: var(--mc-teal); }
+
+/* ---- Hero ---- */
+.mc-hero {
+    position: relative;
+    border-radius: 28px;
+    overflow: hidden;
+    color: #fff;
+    background: radial-gradient(1200px 400px at 85% -10%, rgba(255,255,255,.25), transparent),
+                linear-gradient(135deg, var(--mc-teal) 0%, var(--mc-blue) 100%);
+    padding: 4rem 3rem;
+    box-shadow: var(--mc-shadow);
+}
+.mc-hero h1 { font-weight: 800; font-size: clamp(2rem, 4vw, 3rem); letter-spacing: -.03em; }
+.mc-hero p { font-size: 1.15rem; opacity: .95; max-width: 620px; }
+.mc-hero .bi { opacity: .18; position: absolute; right: 2rem; bottom: -1rem; font-size: 12rem; }
+.mc-hero .btn-light { color: var(--mc-teal-dark); font-weight: 700; }
+
+/* ---- Stat strip ---- */
+.mc-stat { background: var(--mc-card); border-radius: var(--mc-radius); padding: 1.25rem 1.5rem; box-shadow: var(--mc-shadow); }
+.mc-stat .num { font-size: 1.8rem; font-weight: 800; color: var(--mc-teal-dark); }
+.mc-stat .lbl { color: var(--mc-muted); font-weight: 600; font-size: .85rem; }
+
+/* ---- Generic cards ---- */
+.mc-card {
+    background: var(--mc-card);
+    border: 1px solid #eef2f6;
+    border-radius: var(--mc-radius);
+    box-shadow: var(--mc-shadow);
+}
+.mc-feature {
+    background: var(--mc-card);
+    border-radius: var(--mc-radius);
+    border: 1px solid #eef2f6;
+    box-shadow: var(--mc-shadow);
+    transition: transform .18s ease, box-shadow .18s ease;
+}
+.mc-feature:hover { transform: translateY(-6px); box-shadow: 0 18px 40px -14px rgba(15,23,42,.28); }
+.mc-feature .icon {
+    width: 56px; height: 56px; border-radius: 14px;
+    display: grid; place-items: center; font-size: 1.6rem; color: #fff;
+}
+.icon-teal { background: linear-gradient(135deg, #0d9488, #14b8a6); }
+.icon-blue { background: linear-gradient(135deg, #0284c7, #38bdf8); }
+.icon-violet { background: linear-gradient(135deg, #7c3aed, #a78bfa); }
+
+/* ---- Section heading ---- */
+.mc-page-title { font-weight: 800; letter-spacing: -.02em; }
+.mc-page-sub { color: var(--mc-muted); }
+
+/* ---- Appointment timeline cards ---- */
+.appt-card {
+    display: flex; align-items: center; gap: 1.25rem;
+    background: var(--mc-card); border-radius: var(--mc-radius);
+    border: 1px solid #eef2f6; border-left: 6px solid var(--mc-muted);
+    box-shadow: var(--mc-shadow); padding: 1rem 1.25rem; margin-bottom: 1rem;
+}
+.appt-card.s-BOOKED { border-left-color: var(--mc-blue); }
+.appt-card.s-COMPLETED { border-left-color: var(--mc-teal); }
+.appt-card.s-CANCELLED { border-left-color: #ef4444; }
+.appt-date {
+    text-align: center; min-width: 76px; padding: .5rem .75rem;
+    background: #f0fdfa; border-radius: 12px; color: var(--mc-teal-dark);
+}
+.appt-date .d { font-size: 1.5rem; font-weight: 800; line-height: 1; }
+.appt-date .m { font-size: .75rem; font-weight: 700; text-transform: uppercase; }
+.appt-meta { flex: 1; }
+.chip { background: #f1f5f9; border-radius: 999px; padding: .15rem .6rem; font-size: .8rem; font-weight: 600; color: #475569; }
+.status-pill { border-radius: 999px; padding: .3rem .75rem; font-size: .75rem; font-weight: 700; }
+.status-BOOKED { background: #e0f2fe; color: #0369a1; }
+.status-COMPLETED { background: #ccfbf1; color: #0f766e; }
+.status-CANCELLED { background: #fee2e2; color: #b91c1c; }
+
+/* ---- Medication grid cards ---- */
+.med-card {
+    background: var(--mc-card); border-radius: var(--mc-radius);
+    border: 1px solid #eef2f6; box-shadow: var(--mc-shadow);
+    padding: 1.25rem; height: 100%; transition: transform .15s ease;
+    position: relative; overflow: hidden;
+}
+.med-card:hover { transform: translateY(-4px); }
+.med-card .pill {
+    width: 46px; height: 46px; border-radius: 12px; display: grid; place-items: center;
+    background: linear-gradient(135deg, #7c3aed, #a78bfa); color: #fff; font-size: 1.3rem; margin-bottom: .75rem;
+}
+.med-card h5 { font-weight: 700; margin: 0; }
+.med-card .atc { font-family: ui-monospace, monospace; font-size: .8rem; color: var(--mc-muted); }
+
+/* ---- Record accordion ---- */
+.record-item { background: var(--mc-card); border: 1px solid #eef2f6 !important; border-radius: var(--mc-radius) !important; box-shadow: var(--mc-shadow); margin-bottom: .9rem; overflow: hidden; }
+.record-item .accordion-button { font-weight: 700; }
+.record-item .accordion-button:not(.collapsed) { background: #f0fdfa; color: var(--mc-teal-dark); }
+.record-item .accordion-button:focus { box-shadow: none; }
+.rx { background: #f8fafc; border-radius: 12px; padding: .75rem 1rem; margin-bottom: .5rem; }
+
+/* ---- Auth ---- */
+.mc-auth-bg { min-height: 100vh; display: grid; place-items: center;
+    background: radial-gradient(900px 500px at 50% -20%, rgba(14,165,233,.25), transparent),
+                linear-gradient(135deg, #0d9488 0%, #0ea5e9 100%); }
+.mc-auth-card { width: 100%; max-width: 420px; border-radius: 22px; box-shadow: 0 25px 60px -20px rgba(2,6,23,.5); }
+
+.empty-state { text-align: center; padding: 3rem 1rem; color: var(--mc-muted); }
+.empty-state .bi { font-size: 3rem; opacity: .4; }

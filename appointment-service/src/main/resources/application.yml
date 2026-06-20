@@ -1,0 +1,54 @@
+spring:
+  application:
+    name: appointment-service
+  profiles:
+    default: dev
+  cache:
+    type: ${CACHE_TYPE:redis}
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+
+server:
+  port: 8082
+
+# Eureka registration. Disabled by default so the service runs standalone in dev;
+# Docker Compose (Dev A) sets EUREKA_ENABLED=true and the registry URL.
+eureka:
+  client:
+    enabled: ${EUREKA_ENABLED:false}
+    service-url:
+      defaultZone: ${EUREKA_URL:http://localhost:8761/eureka/}
+  instance:
+    prefer-ip-address: true
+
+# Circuit breaker + retry for calls to identity-service (rule BR-10).
+resilience4j:
+  circuitbreaker:
+    instances:
+      identity:
+        sliding-window-size: 10
+        failure-rate-threshold: 50
+        wait-duration-in-open-state: 10s
+        permitted-number-of-calls-in-half-open-state: 3
+        ignore-exceptions:
+          - com.medicare.common.exception.BusinessRuleException
+  retry:
+    instances:
+      identity:
+        max-attempts: 3
+        wait-duration: 500ms
+        retry-exceptions:
+          - feign.FeignException
+        ignore-exceptions:
+          - com.medicare.common.exception.BusinessRuleException
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: when_authorized

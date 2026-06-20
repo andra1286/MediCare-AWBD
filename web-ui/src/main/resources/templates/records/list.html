@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/fragments :: head('Medical records - MediCare')}"></head>
+<body>
+<nav th:replace="~{fragments/fragments :: navbar('records')}"></nav>
+<div th:replace="~{fragments/fragments :: alerts}"></div>
+
+<div class="container">
+    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+        <div>
+            <h2 class="mc-page-title mb-0"><i class="bi bi-file-medical text-primary"></i> Medical Records</h2>
+            <span class="mc-page-sub">Consultations &amp; prescriptions</span>
+        </div>
+        <a class="btn btn-primary" th:href="@{/records/new}"><i class="bi bi-plus-lg"></i> New record</a>
+    </div>
+
+    <div th:if="${page.content.isEmpty()}" class="empty-state mc-card">
+        <i class="bi bi-folder2-open d-block"></i>
+        <p class="mt-2 mb-0">No medical records yet.</p>
+    </div>
+
+    <div class="accordion" id="records">
+        <div class="accordion-item record-item" th:each="r : ${page.content}">
+            <h2 class="accordion-header">
+                <button class="accordion-button collapsed" type="button"
+                        data-bs-toggle="collapse" th:data-bs-target="'#rec' + ${r.id}">
+                    <div class="d-flex w-100 justify-content-between align-items-center pe-3">
+                        <span><i class="bi bi-clipboard2-pulse text-primary me-2"></i>
+                            <span th:text="${r.diagnosis}">Diagnosis</span></span>
+                        <small class="text-muted me-2">
+                            Patient #<span th:text="${r.patientId}"></span> ·
+                            <span th:text="${#temporals.format(r.createdAt, 'yyyy-MM-dd')}"></span>
+                        </small>
+                    </div>
+                </button>
+            </h2>
+            <div th:id="'rec' + ${r.id}" class="accordion-collapse collapse" data-bs-parent="#records">
+                <div class="accordion-body">
+                    <div class="row mb-3">
+                        <div class="col-sm-4"><span class="chip">Appointment #<span th:text="${r.appointmentId}"></span></span></div>
+                        <div class="col-sm-4"><span class="chip">Doctor #<span th:text="${r.doctorId}"></span></span></div>
+                        <div class="col-sm-4"><span class="chip">Patient #<span th:text="${r.patientId}"></span></span></div>
+                    </div>
+                    <p th:if="${r.notes}" class="mb-3"><strong>Notes:</strong> <span th:text="${r.notes}"></span></p>
+
+                    <h6 class="fw-bold"><i class="bi bi-prescription2"></i> Prescriptions</h6>
+                    <p th:if="${r.prescriptions == null or r.prescriptions.isEmpty()}" class="text-muted">None.</p>
+                    <div class="rx" th:each="p : ${r.prescriptions}">
+                        <div class="mb-1"><span th:text="${p.instructions}">Instructions</span></div>
+                        <div class="d-flex gap-2 flex-wrap">
+                            <span class="chip" th:each="m : ${p.medications}">
+                                <i class="bi bi-capsule"></i>
+                                <span th:text="${m.name}"></span>
+                                <span th:if="${m.dosageForm}" th:text="'· ' + ${m.dosageForm}"></span>
+                            </span>
+                        </div>
+                    </div>
+                    <a class="btn btn-sm btn-outline-primary mt-2" th:href="@{'/records/' + ${r.id}}">
+                        <i class="bi bi-arrows-fullscreen"></i> Full view</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <nav th:replace="~{fragments/fragments :: pagination(${page}, '/records', ${sort}, ${size})}"></nav>
+</div>
+<th:block th:replace="~{fragments/fragments :: scripts}"></th:block>
+</body>
+</html>

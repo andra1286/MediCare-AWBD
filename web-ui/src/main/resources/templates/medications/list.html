@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head th:replace="~{fragments/fragments :: head('Medications - MediCare')}"></head>
+<body>
+<nav th:replace="~{fragments/fragments :: navbar('medications')}"></nav>
+<div th:replace="~{fragments/fragments :: alerts}"></div>
+
+<div class="container">
+    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+        <div>
+            <h2 class="mc-page-title mb-0"><i class="bi bi-capsule text-primary"></i> Medication catalog</h2>
+            <span class="mc-page-sub">Used when issuing prescriptions</span>
+        </div>
+        <a sec:authorize="hasRole('ADMIN')" class="btn btn-primary" th:href="@{/medications/new}">
+            <i class="bi bi-plus-lg"></i> New medication</a>
+    </div>
+
+    <div th:if="${page.content.isEmpty()}" class="empty-state mc-card">
+        <i class="bi bi-capsule-pill d-block"></i>
+        <p class="mt-2 mb-0">No medications in the catalog yet.</p>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-sm-6 col-lg-4" th:each="m : ${page.content}">
+            <div class="med-card">
+                <div class="pill"><i class="bi bi-capsule"></i></div>
+                <h5 th:text="${m.name}">Name</h5>
+                <div class="mc-page-sub mb-1" th:text="${m.dosageForm} ?: '—'">Form</div>
+                <div class="atc">ATC: <span th:text="${m.atcCode} ?: 'n/a'"></span></div>
+                <div sec:authorize="hasRole('ADMIN')" class="mt-3 d-flex gap-2">
+                    <a class="btn btn-sm btn-outline-primary" th:href="@{'/medications/' + ${m.id} + '/edit'}">
+                        <i class="bi bi-pencil"></i></a>
+                    <form th:action="@{'/medications/' + ${m.id} + '/delete'}" method="post"
+                          onsubmit="return confirm('Delete this medication?');">
+                        <button class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <nav th:replace="~{fragments/fragments :: pagination(${page}, '/medications', ${sort}, ${size})}"></nav>
+</div>
+<th:block th:replace="~{fragments/fragments :: scripts}"></th:block>
+</body>
+</html>

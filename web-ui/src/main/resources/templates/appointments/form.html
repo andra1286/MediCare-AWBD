@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/fragments :: head('Book appointment - MediCare')}"></head>
+<body>
+<nav th:replace="~{fragments/fragments :: navbar('appointments')}"></nav>
+<div th:replace="~{fragments/fragments :: alerts}"></div>
+
+<div class="container" style="max-width: 640px;">
+    <h2 class="mc-page-title mb-1"><i class="bi bi-calendar2-plus text-primary"></i> Book appointment</h2>
+    <p class="mc-page-sub mb-4">Pick a doctor, patient and a future time slot.</p>
+
+    <div class="mc-card p-4">
+    <form th:action="@{/appointments}" th:object="${appointmentForm}" method="post" novalidate>
+        <div class="mb-3">
+            <label class="form-label" for="doctorId">Doctor ID</label>
+            <input class="form-control" id="doctorId" type="number" th:field="*{doctorId}" required min="1"
+                   th:classappend="${#fields.hasErrors('doctorId')} ? 'is-invalid'"/>
+            <div class="invalid-feedback" th:if="${#fields.hasErrors('doctorId')}" th:errors="*{doctorId}"></div>
+        </div>
+        <div class="mb-3">
+            <label class="form-label" for="patientId">Patient ID</label>
+            <input class="form-control" id="patientId" type="number" th:field="*{patientId}" required min="1"
+                   th:classappend="${#fields.hasErrors('patientId')} ? 'is-invalid'"/>
+            <div class="invalid-feedback" th:if="${#fields.hasErrors('patientId')}" th:errors="*{patientId}"></div>
+        </div>
+        <div class="mb-3">
+            <label class="form-label" for="scheduledAt">Date &amp; time</label>
+            <input class="form-control" id="scheduledAt" type="datetime-local" th:field="*{scheduledAt}" required
+                   th:classappend="${#fields.hasErrors('scheduledAt')} ? 'is-invalid'"/>
+            <div class="invalid-feedback" th:if="${#fields.hasErrors('scheduledAt')}" th:errors="*{scheduledAt}"></div>
+        </div>
+        <div class="mb-3">
+            <label class="form-label" for="reason">Reason</label>
+            <textarea class="form-control" id="reason" th:field="*{reason}" rows="2" maxlength="500"
+                      th:classappend="${#fields.hasErrors('reason')} ? 'is-invalid'"></textarea>
+            <div class="invalid-feedback" th:if="${#fields.hasErrors('reason')}" th:errors="*{reason}"></div>
+        </div>
+        <button class="btn btn-primary" type="submit"><i class="bi bi-check2"></i> Book</button>
+        <a class="btn btn-light" th:href="@{/appointments}">Cancel</a>
+    </form>
+    </div>
+</div>
+<th:block th:replace="~{fragments/fragments :: scripts}"></th:block>
+</body>
+</html>

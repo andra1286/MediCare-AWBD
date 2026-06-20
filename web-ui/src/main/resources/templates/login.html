@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/fragments :: head('Login - MediCare')}"></head>
+<body>
+<div class="mc-auth-bg p-3">
+    <div class="card mc-auth-card border-0">
+        <div class="card-body p-4 p-md-5">
+            <div class="text-center mb-4">
+                <div class="d-inline-grid mb-2" style="width:64px;height:64px;place-items:center;border-radius:18px;
+                     background:linear-gradient(135deg,#0d9488,#0ea5e9);color:#fff;font-size:1.9rem;">
+                    <i class="bi bi-heart-pulse-fill"></i>
+                </div>
+                <h3 class="fw-bold mb-0">MediCare</h3>
+                <p class="mc-page-sub mb-0">Clinic management platform</p>
+            </div>
+
+            <div th:if="${param.error}" class="alert alert-danger py-2">
+                <i class="bi bi-exclamation-circle"></i> Invalid username or password.</div>
+            <div th:if="${param.logout}" class="alert alert-success py-2">
+                <i class="bi bi-check-circle"></i> You have been logged out.</div>
+
+            <form th:action="@{/login}" method="post">
+                <div class="mb-3">
+                    <label class="form-label fw-semibold" for="username">Username</label>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="bi bi-person"></i></span>
+                        <input class="form-control" id="username" name="username" required autofocus/>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-semibold" for="password">Password</label>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="bi bi-lock"></i></span>
+                        <input class="form-control" id="password" name="password" type="password" required/>
+                    </div>
+                </div>
+                <div class="form-check mb-3">
+                    <input class="form-check-input" id="remember-me" name="remember-me" type="checkbox"/>
+                    <label class="form-check-label" for="remember-me">Remember me</label>
+                </div>
+                <button class="btn btn-primary w-100 btn-lg" type="submit">
+                    <i class="bi bi-box-arrow-in-right"></i> Sign in</button>
+            </form>
+
+            <p class="text-muted small mt-4 mb-0 text-center">
+                Demo: <code>admin/admin</code> · <code>doctor/doctor</code> · <code>patient/patient</code>
+            </p>
+        </div>
+    </div>
+</div>
+<th:block th:replace="~{fragments/fragments :: scripts}"></th:block>
+</body>
+</html>
