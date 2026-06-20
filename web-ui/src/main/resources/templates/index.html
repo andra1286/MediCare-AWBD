@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/fragments :: head('Dashboard - MediCare')}"></head>
+<body>
+<nav th:replace="~{fragments/fragments :: navbar}"></nav>
+<div th:replace="~{fragments/fragments :: alerts}"></div>
+
+<div class="container">
+    <h2 class="mb-4">Welcome to MediCare</h2>
+    <div class="row g-3">
+        <div class="col-md-4">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h5 class="card-title">📅 Appointments</h5>
+                    <p class="card-text">Book, cancel and complete medical appointments.</p>
+                    <a class="btn btn-primary" th:href="@{/appointments}">Open</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h5 class="card-title">📋 Medical Records</h5>
+                    <p class="card-text">Create and review consultation records and prescriptions.</p>
+                    <a class="btn btn-primary" th:href="@{/records}">Open</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h5 class="card-title">💊 Medications</h5>
+                    <p class="card-text">Browse the medication catalog (admins can edit it).</p>
+                    <a class="btn btn-primary" th:href="@{/medications}">Open</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<th:block th:replace="~{fragments/fragments :: scripts}"></th:block>
+</body>
+</html>

@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head th:fragment="head(title)">
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title th:text="${title}">MediCare</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+          rel="stylesheet"/>
+</head>
+<body>
+
+<!-- ===== Navbar ===== -->
+<nav th:fragment="navbar" class="navbar navbar-expand-lg navbar-dark bg-primary mb-4">
+    <div class="container">
+        <a class="navbar-brand" th:href="@{/}">🏥 MediCare</a>
+        <div class="collapse navbar-collapse">
+            <ul class="navbar-nav me-auto">
+                <li class="nav-item"><a class="nav-link" th:href="@{/appointments}">Appointments</a></li>
+                <li class="nav-item"><a class="nav-link" th:href="@{/records}">Medical Records</a></li>
+                <li class="nav-item"><a class="nav-link" th:href="@{/medications}">Medications</a></li>
+            </ul>
+            <span class="navbar-text text-white me-3">
+                <span sec:authentication="name">user</span>
+                (<span sec:authentication="principal.authorities">roles</span>)
+            </span>
+            <form th:action="@{/logout}" method="post" class="d-inline">
+                <button class="btn btn-outline-light btn-sm" type="submit">Logout</button>
+            </form>
+        </div>
+    </div>
+</nav>
+
+<!-- ===== Flash alerts ===== -->
+<div th:fragment="alerts" class="container">
+    <div th:if="${success}" class="alert alert-success alert-dismissible fade show" role="alert">
+        <span th:text="${success}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    <div th:if="${error}" class="alert alert-danger alert-dismissible fade show" role="alert">
+        <span th:text="${error}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+</div>
+
+<!-- ===== Pagination (page object + base path + sort + size) ===== -->
+<nav th:fragment="pagination(page, base, sort, size)"
+     th:if="${page != null and page.totalPages > 1}" aria-label="pages">
+    <ul class="pagination">
+        <li class="page-item" th:classappend="${page.page == 0} ? 'disabled'">
+            <a class="page-link"
+               th:href="@{${base}(page=${page.page - 1},size=${size},sort=${sort})}">Previous</a>
+        </li>
+        <li class="page-item disabled">
+            <span class="page-link"
+                  th:text="'Page ' + (${page.page} + 1) + ' / ' + ${page.totalPages}">Page</span>
+        </li>
+        <li class="page-item" th:classappend="${page.last} ? 'disabled'">
+            <a class="page-link"
+               th:href="@{${base}(page=${page.page + 1},size=${size},sort=${sort})}">Next</a>
+        </li>
+    </ul>
+</nav>
+
+<!-- ===== Scripts ===== -->
+<th:block th:fragment="scripts">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</th:block>
+
+</body>
+</html>

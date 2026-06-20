@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/fragments :: head('Record - MediCare')}"></head>
+<body>
+<nav th:replace="~{fragments/fragments :: navbar}"></nav>
+<div th:replace="~{fragments/fragments :: alerts}"></div>
+
+<div class="container" style="max-width: 720px;">
+    <h2 class="mb-4">Medical record #<span th:text="${record.id}"></span></h2>
+
+    <dl class="row">
+        <dt class="col-sm-3">Appointment</dt><dd class="col-sm-9" th:text="${record.appointmentId}"></dd>
+        <dt class="col-sm-3">Doctor</dt><dd class="col-sm-9" th:text="${record.doctorId}"></dd>
+        <dt class="col-sm-3">Patient</dt><dd class="col-sm-9" th:text="${record.patientId}"></dd>
+        <dt class="col-sm-3">Diagnosis</dt><dd class="col-sm-9" th:text="${record.diagnosis}"></dd>
+        <dt class="col-sm-3">Notes</dt><dd class="col-sm-9" th:text="${record.notes}"></dd>
+        <dt class="col-sm-3">Created</dt>
+        <dd class="col-sm-9" th:text="${#temporals.format(record.createdAt, 'yyyy-MM-dd HH:mm')}"></dd>
+    </dl>
+
+    <h4>Prescriptions</h4>
+    <div th:if="${record.prescriptions == null or record.prescriptions.isEmpty()}" class="text-muted">
+        No prescriptions.
+    </div>
+    <div th:each="p : ${record.prescriptions}" class="card mb-2">
+        <div class="card-body">
+            <p class="mb-1"><strong>Instructions:</strong> <span th:text="${p.instructions}"></span></p>
+            <p class="mb-1"><strong>Issued:</strong>
+                <span th:text="${#temporals.format(p.issuedAt, 'yyyy-MM-dd HH:mm')}"></span></p>
+            <strong>Medications:</strong>
+            <ul class="mb-0">
+                <li th:each="m : ${p.medications}"
+                    th:text="${m.name + (m.dosageForm != null ? ' - ' + m.dosageForm : '')}"></li>
+            </ul>
+        </div>
+    </div>
+
+    <a class="btn btn-secondary mt-3" th:href="@{/records}">Back</a>
+</div>
+<th:block th:replace="~{fragments/fragments :: scripts}"></th:block>
+</body>
+</html>
