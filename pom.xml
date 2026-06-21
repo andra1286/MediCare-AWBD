@@ -35,6 +35,7 @@
          discovery-server, identity-service, api-gateway. -->
     <modules>
         <module>common-lib</module>
+        <module>discovery-server</module>
         <module>appointment-service</module>
         <module>medical-records-service</module>
         <module>web-ui</module>

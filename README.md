@@ -39,7 +39,7 @@ erDiagram
 | Modul | Port | Rol |
 |---|---|---|
 | `common-lib` | — | DTO-uri, `JwtUtil`, interfețe Feign, model erori, excepții (partajat) |
-| `discovery-server` | 8761 | Eureka — service registry |
+| `discovery-server` | 8761 | Eureka — service registry **(implementat)** |
 | `api-gateway` | 8080 | Spring Cloud Gateway — routing, rate limiting, filtru JWT |
 | `web-ui` | 8090 | Frontend Thymeleaf + Bootstrap |
 | `identity-service` | 8081 | Utilizatori, roluri, profiluri, autentificare, emitere JWT |
@@ -75,11 +75,42 @@ export JAVA_HOME="$(/usr/libexec/java_home -v 21)"   # macOS
 mvn clean install
 ```
 
+## Eureka (discovery-server)
+
+Registry-ul de servicii Netflix Eureka. Celelalte microservicii se înregistrează aici când `EUREKA_ENABLED=true`.
+
+**Pornire (terminal separat):**
+
+```bash
+export JAVA_HOME="$(/usr/libexec/java_home -v 21)"   # macOS — obligatoriu JDK 21
+mvn -pl discovery-server spring-boot:run
+```
+
+**Verificare:** deschide **http://localhost:8761** — dashboard-ul Eureka ar trebui să se încarce (inițial fără instanțe înregistrate).
+
+**Test rapid (fără browser):**
+
+```bash
+curl -s -o /dev/null -w "HTTP %{http_code}\n" http://localhost:8761
+# așteptat: HTTP 200
+```
+
+**Înregistrare servicii (opțional, după ce Eureka rulează):** pornește un serviciu Dev B cu Eureka activ:
+
+```bash
+EUREKA_ENABLED=true EUREKA_URL=http://localhost:8761/eureka/ mvn -pl appointment-service spring-boot:run
+```
+
+Reîmprospătează dashboard-ul — ar trebui să apară `APPOINTMENT-SERVICE` cu o instanță `UP`.
+
 ## Rulare locală (dezvoltare)
 
 Serviciile de business și UI-ul pot rula independent. Din rădăcina proiectului, în terminale separate:
 
 ```bash
+# 0. (Opțional) Discovery Server (port 8761) — vezi secțiunea Eureka de mai sus
+mvn -pl discovery-server spring-boot:run
+
 # 1. Appointment Service (port 8082) — necesită PostgreSQL "medicare_appointment"
 mvn -pl appointment-service spring-boot:run
 
@@ -172,10 +203,11 @@ mvn verify        # rulează unit + integration tests și generează rapoarte Ja
 - **Paginare și sortare** pe listele principale (≥2 criterii), configurabile.
 - **Multi-environment** — profiluri `dev` (PostgreSQL), `test` (H2) și `demo` (H2, rulare fără infrastructură).
 - **Logging** SLF4J + Logback, cu fișier separat pentru erori.
+- **Service discovery** — `discovery-server` (Eureka, port 8761) pentru înregistrarea microserviciilor.
 - **Containerizare** — `docker-compose` pentru servicii + PostgreSQL + Redis.
 - **Testare** — teste unitare (JUnit 5 + Mockito, >70% pe service layer) și de integrare (MockMvc + H2).
 
 ## Contribuții echipă
 
 - **andra1286** — `common-lib`, `appointment-service`, `medical-records-service`, `web-ui` (frontend), comunicare Feign + Resilience4j + caching Redis, teste de integrare, profil `demo`, `docker-compose`.
-- *(membru 2 — de completat pe măsură ce contribuie)*
+- *(membru 2 — Dev A: `discovery-server`, identity-service, api-gateway, CI/CD — de completat pe măsură ce contribuie)*
