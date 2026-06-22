@@ -1,0 +1,27 @@
+spring:
+  application:
+    name: identity-service
+  profiles:
+    default: dev
+
+server:
+  port: 8081
+
+eureka:
+  client:
+    enabled: ${EUREKA_ENABLED:false}
+    service-url:
+      defaultZone: ${EUREKA_URL:http://localhost:8761/eureka/}
+  instance:
+    prefer-ip-address: true
+
+medicare:
+  jwt:
+    secret: ${JWT_SECRET:MedicareDevSecretKeyMustBeAtLeast32Chars!!}
+    expiration-ms: ${JWT_EXPIRATION_MS:86400000}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics

@@ -39,14 +39,72 @@ erDiagram
 | Modul | Port | Rol |
 |---|---|---|
 | `common-lib` | — | DTO-uri, `JwtUtil`, interfețe Feign, model erori, excepții (partajat) |
-| `discovery-server` | 8761 | Eureka — service registry **(implementat)** |
+| `discovery-server` | 8761 | Eureka — service registry |
 | `api-gateway` | 8080 | Spring Cloud Gateway — routing, rate limiting, filtru JWT |
 | `web-ui` | 8090 | Frontend Thymeleaf + Bootstrap |
-| `identity-service` | 8081 | Utilizatori, roluri, profiluri, autentificare, emitere JWT |
+| `identity-service` | 8081 | Utilizatori, roluri, profiluri, autentificare, emitere JWT **(implementat)** |
 | `appointment-service` | 8082 | Programări (rezervare/anulare/finalizare) |
 | `medical-records-service` | 8083 | Fișe medicale, rețete, medicamente |
 
-Fiecare microserviciu are propria schemă de bază de date; referințele între servicii se fac prin ID (fără join-uri JPA între servicii). JWT-ul este validat local în fiecare serviciu folosind `common-lib`.
+Fiecare microserviciu are propria schemă de bază de date; referințele între servicii se fac prin ID (fără join-uri JPA între servicii). **identity-service** emite JWT-uri la login; celelalte servicii le pot valida local via `common-lib` (`JwtUtil`).
+
+## Identity service (autentificare + utilizatori)
+
+Serviciul de identitate gestionează utilizatori, roluri (ADMIN/DOCTOR/PATIENT), profiluri doctor/pacient și emiterea JWT.
+
+**Pornire (necesită PostgreSQL `medicare_identity`):**
+
+Dacă Postgres rulează deja din Docker Compose (volum vechi), creează manual baza (atenție: `-d medicare_appointment`, nu doar `-U medicare`):
+
+```bash
+docker exec medicare-awbd-postgres-1 psql -U medicare -d medicare_appointment -c "CREATE DATABASE medicare_identity;"
+```
+
+La un volum Postgres nou, `docker/postgres-init.sql` o creează automat.
+
+**Pornire locală (Java 21):** nu folosi `-am` cu `spring-boot:run` (pornește greșit parent-ul). Instalează `common-lib`, apoi rulează modulul:
+
+```bash
+export JAVA_HOME="$(/usr/libexec/java_home -v 21)"
+mvn -pl common-lib install -DskipTests
+mvn -pl identity-service spring-boot:run
+```
+
+**Pornire cu Docker Maven (Mac — Postgres din compose pe host):**
+
+```bash
+docker run --rm -p 8081:8081 \
+  -v "$(pwd)":/workspace -w /workspace \
+  -e DB_HOST=host.docker.internal \
+  -e DB_NAME=medicare_identity \
+  -e DB_USER=medicare -e DB_PASSWORD=medicare \
+  maven:3.9-eclipse-temurin-21 bash -c \
+  "mvn -pl identity-service -am package -DskipTests && java -jar identity-service/target/identity-service-1.0.0.jar"
+```
+
+> Nu folosi `-am spring-boot:run` (pornește greșit parent-ul). `package` + `java -jar` e varianta sigură.
+
+Aștepți ~1–2 minute la primul start (build + descărcare dependențe). Când vezi `Started IdentityServiceApplication`, testezi login-ul.
+
+**Utilizatori demo (seed la pornire):** `admin/admin`, `doctor/doctor`, `patient/patient`.
+
+**Test login (JWT):**
+
+```bash
+curl -s -X POST http://localhost:8081/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"username":"doctor","password":"doctor"}'
+```
+
+**Contract Feign (`/internal`)** — folosit de appointment-service pentru validare doctor/pacient:
+
+| Metodă | Endpoint | Răspuns |
+|---|---|---|
+| GET | `/internal/doctors/{id}` | `DoctorDto` |
+| GET | `/internal/patients/{id}` | `PatientDto` |
+| GET | `/internal/users/{id}` | `UserDto` |
+
+> web-ui folosește încă login in-memory; integrarea cu identity-service vine în Faza 4 (Dev A).
 
 ## Interfață utilizator (web-ui)
 
@@ -130,7 +188,7 @@ Apoi deschide **http://localhost:8090** și autentifică-te cu unul dintre utili
 | `patient` | `patient` | PATIENT |
 
 > Pentru rulare rapidă a dependențelor locale: `docker run -p 5432:5432 -e POSTGRES_USER=medicare -e POSTGRES_PASSWORD=medicare -e POSTGRES_DB=medicare_appointment postgres:16` (similar pentru `medicare_records`) și `docker run -p 6379:6379 redis:7`. Variabilele `DB_HOST/DB_PORT/DB_NAME/REDIS_HOST` sunt configurabile.
-> Dacă identity-service / appointment-service nu rulează, apelurile Feign cad pe fallback-ul Resilience4j (mod degradat), deci UI-ul rămâne funcțional.
+> Dacă identity-service nu rulează, apelurile Feign cad pe fallback-ul Resilience4j (mod degradat), deci UI-ul rămâne funcțional.
 
 ## Rulare cu Docker Compose (recomandat)
 
@@ -143,7 +201,7 @@ docker compose up --build
 Apoi deschide **http://localhost:8090** și autentifică-te (`admin/admin`, `doctor/doctor`, `patient/patient`).
 Oprire: `docker compose down` (adaugă `-v` pentru a șterge și datele).
 
-> `docker-compose.yml` pornește serviciile de business (appointment, records), web-ui, PostgreSQL și Redis. Serviciile de platformă (Eureka, identity-service, API Gateway) se adaugă pe măsură ce sunt implementate.
+> `docker-compose.yml` pornește serviciile de business (appointment, records), web-ui, PostgreSQL și Redis. **identity-service** și **discovery-server** sunt implementate dar se adaugă în compose în Faza 6; până atunci rulează local cu Maven (vezi secțiunile Eureka și Identity).
 
 ## Rulare demo (fără Docker, fără infrastructură — H2 în memorie)
 
@@ -155,9 +213,22 @@ java -jar medical-records-service/target/medical-records-service-1.0.0.jar --spr
 java -jar web-ui/target/web-ui-1.0.0.jar   # :8090
 ```
 
-> În ambele moduri, apelurile către identity-service (în curs de implementare) cad pe fallback-ul Resilience4j, deci aplicația rămâne complet utilizabilă.
+> Dacă identity-service nu rulează, apelurile Feign din appointment-service cad pe fallback-ul Resilience4j (mod degradat), deci UI-ul rămâne funcțional.
 
 ## API REST
+
+**identity-service** (`:8081`)
+
+| Metodă | Endpoint | Descriere |
+|---|---|---|
+| POST | `/auth/login` | Login → JWT (username, roles, userId) |
+| POST | `/auth/register` | Înregistrare pacient (ROLE_PATIENT) → JWT |
+| GET/POST/PUT/DELETE | `/api/users[/{id}]` | CRUD utilizatori (ADMIN) |
+| GET/POST/DELETE | `/api/doctors[/{id}]` | Listă/CRUD profiluri doctor |
+| GET/POST/DELETE | `/api/patients[/{id}]` | Listă/CRUD profiluri pacient (ADMIN/DOCTOR) |
+| GET | `/internal/doctors/{id}` | Contract Feign — validare doctor |
+| GET | `/internal/patients/{id}` | Contract Feign — validare pacient |
+| GET | `/internal/users/{id}` | Contract Feign — detalii user |
 
 **appointment-service** (`:8082`)
 
@@ -204,6 +275,7 @@ mvn verify        # rulează unit + integration tests și generează rapoarte Ja
 - **Multi-environment** — profiluri `dev` (PostgreSQL), `test` (H2) și `demo` (H2, rulare fără infrastructură).
 - **Logging** SLF4J + Logback, cu fișier separat pentru erori.
 - **Service discovery** — `discovery-server` (Eureka, port 8761) pentru înregistrarea microserviciilor.
+- **Autentificare JWT** — `identity-service` (login/register, CRUD users/doctors/patients, contract `/internal` pentru Feign).
 - **Containerizare** — `docker-compose` pentru servicii + PostgreSQL + Redis.
 - **Testare** — teste unitare (JUnit 5 + Mockito, >70% pe service layer) și de integrare (MockMvc + H2).
 

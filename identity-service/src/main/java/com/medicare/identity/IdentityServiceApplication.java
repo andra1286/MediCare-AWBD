@@ -1,0 +1,12 @@
+package com.medicare.identity;
+
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+
+@SpringBootApplication(scanBasePackages = "com.medicare")
+public class IdentityServiceApplication {
+
+    public static void main(String[] args) {
+        SpringApplication.run(IdentityServiceApplication.class, args);
+    }
+}
