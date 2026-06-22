@@ -10,10 +10,15 @@ server:
 
 # Backend service URLs (direct in dev; point at the gateway in full deployment).
 medicare:
+  identity:
+    url: ${IDENTITY_URL:http://localhost:8081}
   appointment:
     url: ${APPOINTMENT_URL:http://localhost:8082}
   records:
     url: ${RECORDS_URL:http://localhost:8083}
+  jwt:
+    secret: ${JWT_SECRET:MedicareDevSecretKeyMustBeAtLeast32Chars!!}
+    expiration-ms: ${JWT_EXPIRATION_MS:86400000}
 
 management:
   endpoints:

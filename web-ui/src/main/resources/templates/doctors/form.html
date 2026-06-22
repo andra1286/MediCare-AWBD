@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/fragments :: head('New doctor - MediCare')}"></head>
+<body>
+<nav th:replace="~{fragments/fragments :: navbar('doctors')}"></nav>
+<div th:replace="~{fragments/fragments :: alerts}"></div>
+
+<div class="container" style="max-width: 640px;">
+    <h2 class="mc-page-title mb-4"><i class="bi bi-person-badge text-primary"></i> New doctor profile</h2>
+
+    <div class="mc-card p-4">
+    <form th:action="@{/doctors}" th:object="${doctorForm}" method="post" novalidate>
+        <div class="mb-3">
+            <label class="form-label" for="userId">User ID</label>
+            <input class="form-control" id="userId" type="number" th:field="*{userId}" required min="1"
+                   th:classappend="${#fields.hasErrors('userId')} ? 'is-invalid'"/>
+            <div class="form-text">User must exist with ROLE_DOCTOR and no existing profile.</div>
+            <div class="invalid-feedback" th:if="${#fields.hasErrors('userId')}" th:errors="*{userId}"></div>
+        </div>
+        <div class="mb-3">
+            <label class="form-label" for="specialty">Specialty</label>
+            <input class="form-control" id="specialty" th:field="*{specialty}" required maxlength="100"
+                   th:classappend="${#fields.hasErrors('specialty')} ? 'is-invalid'"/>
+            <div class="invalid-feedback" th:if="${#fields.hasErrors('specialty')}" th:errors="*{specialty}"></div>
+        </div>
+        <div class="mb-3">
+            <label class="form-label" for="licenseNo">License no.</label>
+            <input class="form-control" id="licenseNo" th:field="*{licenseNo}" required maxlength="50"
+                   th:classappend="${#fields.hasErrors('licenseNo')} ? 'is-invalid'"/>
+            <div class="invalid-feedback" th:if="${#fields.hasErrors('licenseNo')}" th:errors="*{licenseNo}"></div>
+        </div>
+        <button class="btn btn-primary" type="submit"><i class="bi bi-check2"></i> Save</button>
+        <a class="btn btn-light" th:href="@{/doctors}">Cancel</a>
+    </form>
+    </div>
+</div>
+<th:block th:replace="~{fragments/fragments :: scripts}"></th:block>
+</body>
+</html>

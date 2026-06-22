@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head th:replace="~{fragments/fragments :: head('Patients - MediCare')}"></head>
+<body>
+<nav th:replace="~{fragments/fragments :: navbar('patients')}"></nav>
+<div th:replace="~{fragments/fragments :: alerts}"></div>
+
+<div class="container">
+    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+        <div>
+            <h2 class="mc-page-title mb-0"><i class="bi bi-people text-primary"></i> Patients</h2>
+            <span class="mc-page-sub">Profiles linked to user accounts</span>
+        </div>
+        <a sec:authorize="hasRole('ADMIN')" class="btn btn-primary" th:href="@{/patients/new}">
+            <i class="bi bi-plus-lg"></i> New patient profile</a>
+    </div>
+
+    <div th:if="${page.content.isEmpty()}" class="empty-state mc-card">
+        <i class="bi bi-people d-block"></i>
+        <p class="mt-2 mb-0">No patient profiles yet.</p>
+    </div>
+
+    <div class="table-responsive mc-card" th:if="${!page.content.isEmpty()}">
+        <table class="table table-hover mb-0 align-middle">
+            <thead class="table-light">
+            <tr>
+                <th>ID</th>
+                <th>Name</th>
+                <th>Personal ID</th>
+                <th>Phone</th>
+                <th sec:authorize="hasRole('ADMIN')"></th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="p : ${page.content}">
+                <td th:text="${p.id}">1</td>
+                <td th:text="${p.fullName}">Name</td>
+                <td th:text="${p.personalId}">PAT-001</td>
+                <td th:text="${p.phone} ?: '—'">Phone</td>
+                <td sec:authorize="hasRole('ADMIN')" class="text-end">
+                    <form th:action="@{'/patients/' + ${p.id} + '/delete'}" method="post"
+                          onsubmit="return confirm('Delete this patient profile?');" class="d-inline">
+                        <button class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
+                    </form>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <nav th:replace="~{fragments/fragments :: pagination(${page}, '/patients', ${sort}, ${size})}"></nav>
+</div>
+<th:block th:replace="~{fragments/fragments :: scripts}"></th:block>
+</body>
+</html>

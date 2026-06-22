@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/fragments :: head('New patient - MediCare')}"></head>
+<body>
+<nav th:replace="~{fragments/fragments :: navbar('patients')}"></nav>
+<div th:replace="~{fragments/fragments :: alerts}"></div>
+
+<div class="container" style="max-width: 640px;">
+    <h2 class="mc-page-title mb-4"><i class="bi bi-people text-primary"></i> New patient profile</h2>
+
+    <div class="mc-card p-4">
+    <form th:action="@{/patients}" th:object="${patientForm}" method="post" novalidate>
+        <div class="mb-3">
+            <label class="form-label" for="userId">User ID</label>
+            <input class="form-control" id="userId" type="number" th:field="*{userId}" required min="1"
+                   th:classappend="${#fields.hasErrors('userId')} ? 'is-invalid'"/>
+            <div class="form-text">User must exist with ROLE_PATIENT and no existing profile.</div>
+            <div class="invalid-feedback" th:if="${#fields.hasErrors('userId')}" th:errors="*{userId}"></div>
+        </div>
+        <div class="mb-3">
+            <label class="form-label" for="personalId">Personal ID</label>
+            <input class="form-control" id="personalId" th:field="*{personalId}" required maxlength="20"
+                   th:classappend="${#fields.hasErrors('personalId')} ? 'is-invalid'"/>
+            <div class="invalid-feedback" th:if="${#fields.hasErrors('personalId')}" th:errors="*{personalId}"></div>
+        </div>
+        <div class="mb-3">
+            <label class="form-label" for="phone">Phone</label>
+            <input class="form-control" id="phone" th:field="*{phone}" maxlength="20"/>
+        </div>
+        <button class="btn btn-primary" type="submit"><i class="bi bi-check2"></i> Save</button>
+        <a class="btn btn-light" th:href="@{/patients}">Cancel</a>
+    </form>
+    </div>
+</div>
+<th:block th:replace="~{fragments/fragments :: scripts}"></th:block>
+</body>
+</html>

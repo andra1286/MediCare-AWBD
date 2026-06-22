@@ -104,7 +104,7 @@ curl -s -X POST http://localhost:8081/auth/login \
 | GET | `/internal/patients/{id}` | `PatientDto` |
 | GET | `/internal/users/{id}` | `UserDto` |
 
-> web-ui folosește încă login in-memory; integrarea cu identity-service vine în Faza 4 (Dev A).
+> web-ui se autentifică prin `POST /auth/login` pe identity-service (Faza 4).
 
 ## API Gateway (port 8080)
 
@@ -151,21 +151,52 @@ curl -s -o /dev/null -w "HTTP %{http_code}\n" \
   http://localhost:8080/appointments/api/appointments
 ```
 
-> UI-ul rămâne pe **8090** direct până la Faza 4; gateway testezi cu `curl` sau Postman.
 
 ## Interfață utilizator (web-ui)
 
-Frontend modern cu temă medicală, construit cu **Thymeleaf + Bootstrap 5** (font Inter, Bootstrap Icons), găzduit ca aplicație separată (`web-ui`, port 8090):
+Frontend modern cu temă medicală, construit cu **Thymeleaf + Bootstrap 5** (port **8090**):
 
-- **Homepage** cu secțiune *hero* medicală și carduri pentru cele 3 module.
-- **Programări** — afișare tip *timeline* (carduri cu bandă colorată după status: BOOKED/COMPLETED/CANCELLED), sortare și paginare.
-- **Fișe medicale** — carduri *acordeon* care se extind și arată rețetele + medicamentele inline.
-- **Medicamente** — grilă de carduri; acțiunile de editare/ștergere apar doar pentru ADMIN.
-- **Securitate UI:** pagină de login custom, 3 roluri (ADMIN/DOCTOR/PATIENT), parole **BCrypt**, **remember-me**, **CSRF**, logout, autorizare pe rol.
-- **Validare:** server-side (Bean Validation) + client-side (HTML5) + mesaje prietenoase.
-- **Pagină de eroare** custom (404/403/500) tematizată.
+- **Autentificare reală** — login prin identity-service (`/auth/login`); JWT-ul sesiunii e propagat automat la apelurile backend.
+- **Management utilizatori** (ADMIN) — `/users` — CRUD conturi și roluri.
+- **Management doctori** (ADMIN) — `/doctors` — profiluri medicale legate de conturi.
+- **Management pacienți** (ADMIN/DOCTOR listă, ADMIN creare) — `/patients`.
+- **Programări** — formular cu **dropdown doctor/pacient** (nu ID-uri manuale); pacientul logat își vede profilul pre-selectat.
+- **Fișe medicale**, **medicamente** — ca înainte; editare catalog doar ADMIN.
 
-> Utilizatori demo: `admin/admin`, `doctor/doctor`, `patient/patient`.
+**Docker (Mac)** — variabilele cu `-e`, nu înainte de `docker run`:
+
+```bash
+docker compose stop web-ui
+
+docker run --rm -p 8090:8090 \
+  -e IDENTITY_URL=http://host.docker.internal:8081 \
+  -e APPOINTMENT_URL=http://host.docker.internal:8082 \
+  -e RECORDS_URL=http://host.docker.internal:8083 \
+  -v "$(pwd)":/workspace -w /workspace \
+  maven:3.9-eclipse-temurin-21 bash -c \
+  "mvn -pl web-ui -am package -DskipTests -q && java -jar web-ui/target/web-ui-1.0.0.jar"
+```
+
+**Local (Maven pe host, fără Docker):**
+
+```bash
+IDENTITY_URL=http://localhost:8081 \
+APPOINTMENT_URL=http://localhost:8082 \
+RECORDS_URL=http://localhost:8083 \
+mvn -pl web-ui spring-boot:run
+```
+
+**Prin gateway** (când rulează pe 8080):
+
+```bash
+IDENTITY_URL=http://localhost:8080/identity \
+APPOINTMENT_URL=http://localhost:8080/appointments \
+RECORDS_URL=http://localhost:8080/records \
+mvn -pl web-ui spring-boot:run
+```
+
+> **identity-service trebuie să ruleze** pe 8081 (sau via gateway) — altfel login-ul eșuează.
+> Utilizatori demo (seed identity): `admin/admin`, `doctor/doctor`, `patient/patient`.
 
 ## Cerințe de build (IMPORTANT)
 
@@ -222,8 +253,11 @@ mvn -pl appointment-service spring-boot:run
 # 2. Medical Records Service (port 8083) — necesită PostgreSQL "medicare_records" + Redis
 mvn -pl medical-records-service spring-boot:run
 
-# 3. Web UI (port 8090)
-mvn -pl web-ui spring-boot:run
+# 3. Identity Service (port 8081) — necesită PostgreSQL "medicare_identity"
+mvn -pl identity-service -am package -DskipTests && java -jar identity-service/target/identity-service-1.0.0.jar
+
+# 4. Web UI (port 8090) — necesită identity-service pentru login
+IDENTITY_URL=http://localhost:8081 mvn -pl web-ui spring-boot:run
 ```
 
 Apoi deschide **http://localhost:8090** și autentifică-te cu unul dintre utilizatorii demo:

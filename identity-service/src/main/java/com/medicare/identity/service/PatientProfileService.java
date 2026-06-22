@@ -47,6 +47,15 @@ public class PatientProfileService {
                 .orElseThrow(() -> new ResourceNotFoundException("Patient not found: " + id));
     }
 
+    @Transactional(readOnly = true)
+    public PatientDto getByUsername(String username) {
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found: " + username));
+        return patientProfileRepository.findByUserId(user.getId())
+                .map(mapper::toPatientDto)
+                .orElseThrow(() -> new ResourceNotFoundException("Patient profile not found for user: " + username));
+    }
+
     @Transactional
     public PatientDto create(CreatePatientProfileRequest request) {
         if (patientProfileRepository.existsByPersonalId(request.getPersonalId())) {

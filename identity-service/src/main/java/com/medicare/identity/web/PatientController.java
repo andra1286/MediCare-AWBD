@@ -11,6 +11,8 @@ import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -30,6 +32,12 @@ public class PatientController {
     @PreAuthorize("hasAnyRole('ADMIN', 'DOCTOR')")
     public PageResponse<PatientDto> list(@PageableDefault(size = 10, sort = "personalId") Pageable pageable) {
         return patientProfileService.list(pageable);
+    }
+
+    @GetMapping("/me")
+    @PreAuthorize("hasRole('PATIENT')")
+    public PatientDto me(@AuthenticationPrincipal UserDetails user) {
+        return patientProfileService.getByUsername(user.getUsername());
     }
 
     @GetMapping("/{id}")
