@@ -273,16 +273,40 @@ Apoi deschide **http://localhost:8090** și autentifică-te cu unul dintre utili
 
 ## Rulare cu Docker Compose (recomandat)
 
-Pornește întreaga aplicație (PostgreSQL + Redis + cele 3 servicii) cu o singură comandă — necesită doar Docker:
+Pornește **întregul stack** (PostgreSQL, Redis, Eureka, identity, gateway, servicii business, web-ui) cu o singură comandă:
 
 ```bash
+# Oprește containere manuale vechi pe aceleași porturi (8080, 8081, 8090), dacă există
+docker ps --format '{{.Names}} {{.Ports}}' | grep -E '8080|8081|8090'
+
 docker compose up --build
 ```
 
-Apoi deschide **http://localhost:8090** și autentifică-te (`admin/admin`, `doctor/doctor`, `patient/patient`).
-Oprire: `docker compose down` (adaugă `-v` pentru a șterge și datele).
+| URL | Serviciu |
+|---|---|
+| http://localhost:8090 | **Web UI** (login: `admin/admin`, `doctor/doctor`, `patient/patient`) |
+| http://localhost:8761 | **Eureka** dashboard — ar trebui să vezi 5 instanțe UP |
+| http://localhost:8080 | **API Gateway** (routing + JWT + rate limit) |
+| http://localhost:8081 | identity-service (direct, debug) |
 
-> `docker-compose.yml` pornește serviciile de business (appointment, records), web-ui, PostgreSQL și Redis. **identity-service** și **discovery-server** sunt implementate dar se adaugă în compose în Faza 6; până atunci rulează local cu Maven (vezi secțiunile Eureka și Identity).
+Web-ui apelează backend-urile **direct** în rețeaua Docker (`identity-service:8081`, etc.). Gateway (`:8080`) rămâne pentru API extern / test curl.
+
+**Prima pornire:** Spring Boot are nevoie de ~30–60s. Verifică:
+
+```bash
+curl -s http://localhost:8082/actuator/health   # UP
+curl -s http://localhost:8761                   # Eureka HTML
+```
+
+**Test gateway:**
+
+```bash
+curl -s -X POST http://localhost:8080/identity/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"username":"admin","password":"admin"}' | jq .
+```
+
+Oprire: `docker compose down` (adaugă `-v` pentru a șterge datele Postgres).
 
 ## Rulare demo (fără Docker, fără infrastructură — H2 în memorie)
 
@@ -356,8 +380,9 @@ Secret JWT (dev): `MedicareDevSecretKeyMustBeAtLeast32Chars!!` — configurabil 
 **Pregătire** (rebuild serviciile după Faza 5):
 
 ```bash
-docker compose up --build -d appointment-service medical-records-service
-# identity + web-ui rulează separat (vezi secțiunea Rulare locală)
+docker compose up --build -d
+sleep 20
+# identity + gateway + Eureka sunt incluse în compose (Faza 6)
 ```
 
 **1. Fără token → 401**
@@ -432,7 +457,7 @@ mvn verify        # rulează unit + integration tests și generează rapoarte Ja
 - **Service discovery** — `discovery-server` (Eureka, port 8761) pentru înregistrarea microserviciilor.
 - **Autentificare JWT** — `identity-service` (login/register, CRUD users/doctors/patients, contract `/internal` pentru Feign).
 - **API Gateway** — routing centralizat, validare JWT, rate limiting Redis (port 8080).
-- **Containerizare** — `docker-compose` pentru servicii + PostgreSQL + Redis.
+- **Containerizare** — `docker-compose` pentru stack complet (Eureka, identity, gateway, servicii business, UI).
 - **Testare** — teste unitare (JUnit 5 + Mockito, >70% pe service layer) și de integrare (MockMvc + H2).
 
 ## Contribuții echipă

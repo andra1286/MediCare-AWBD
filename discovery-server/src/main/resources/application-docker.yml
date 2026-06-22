@@ -1,0 +1,7 @@
+# Docker Compose: registry reachable by service name on the internal network.
+eureka:
+  instance:
+    hostname: discovery-server
+  client:
+    service-url:
+      defaultZone: http://discovery-server:8761/eureka/
