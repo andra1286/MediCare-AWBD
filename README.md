@@ -333,6 +333,80 @@ java -jar web-ui/target/web-ui-1.0.0.jar   # :8090
 
 Erorile sunt returnate uniform (`ErrorResponse`: timestamp, status, message, path, fieldErrors).
 
+## Securitate JWT (Faza 5 — BR-4)
+
+`appointment-service` și `medical-records-service` validează local token-ul JWT (același secret ca `identity-service`) și aplică autorizare pe rol (`@PreAuthorize`).
+
+| Serviciu | Endpoint | Roluri permise |
+|---|---|---|
+| appointment | GET/POST (book, cancel) | ADMIN, DOCTOR, PATIENT |
+| appointment | POST `/{id}/complete` | ADMIN, DOCTOR |
+| records | GET/POST `/api/records` | ADMIN, DOCTOR |
+| medications | GET (listă, detaliu) | orice utilizator autentificat |
+| medications | POST/PUT/DELETE | ADMIN |
+
+Token-ul de la login este propagat automat:
+- **web-ui** → servicii (via `JwtBearerInterceptor` pe RestClient)
+- **medical-records-service** → appointment-service (via `JwtFeignRequestInterceptor` pe Feign)
+
+Secret JWT (dev): `MedicareDevSecretKeyMustBeAtLeast32Chars!!` — configurabil prin `JWT_SECRET`.
+
+### Testare manuală — securitate JWT
+
+**Pregătire** (rebuild serviciile după Faza 5):
+
+```bash
+docker compose up --build -d appointment-service medical-records-service
+# identity + web-ui rulează separat (vezi secțiunea Rulare locală)
+```
+
+**1. Fără token → 401**
+
+```bash
+curl -s -o /dev/null -w "HTTP %{http_code}\n" http://localhost:8082/api/appointments
+# așteptat: HTTP 401
+
+curl -s -o /dev/null -w "HTTP %{http_code}\n" http://localhost:8083/api/medications/all
+# așteptat: HTTP 401
+```
+
+**2. Cu token → 200**
+
+```bash
+TOKEN=$(curl -s -X POST http://localhost:8081/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"username":"doctor","password":"doctor"}' | jq -r '.token')
+
+curl -s -o /dev/null -w "HTTP %{http_code}\n" \
+  -H "Authorization: Bearer $TOKEN" \
+  http://localhost:8082/api/appointments
+# așteptat: HTTP 200
+```
+
+**3. Rol greșit → 403** (ex.: patient nu poate finaliza programare)
+
+```bash
+PATIENT_TOKEN=$(curl -s -X POST http://localhost:8081/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"username":"patient","password":"patient"}' | jq -r '.token')
+
+# creează o programare (201), apoi încearcă complete cu token patient
+curl -s -X POST http://localhost:8082/api/appointments/1/complete \
+  -H "Authorization: Bearer $PATIENT_TOKEN"
+# așteptat: HTTP 403
+```
+
+**4. Prin UI (http://localhost:8090)**
+
+| Utilizator | Ce să testezi | Rezultat așteptat |
+|---|---|---|
+| `doctor/doctor` | Programări → listă, rezervare, finalizare | funcționează |
+| `patient/patient` | Rezervare programare | funcționează; **fără** buton finalizare |
+| `admin/admin` | Medicamente → adaugă/editează/șterge | funcționează |
+| `doctor/doctor` | Medicamente → adaugă | **403** / eroare (doar ADMIN) |
+
+> Dacă UI-ul dă erori după rebuild: deloghează-te și loghează-te din nou (token vechi invalid).
+
 ## Testare
 
 ```bash
@@ -351,7 +425,7 @@ mvn verify        # rulează unit + integration tests și generează rapoarte Ja
 - **Comunicare între microservicii** prin OpenFeign, rezilientă cu Resilience4j (circuit breaker + retry + fallback).
 - **Caching** cu Redis pentru datele citite frecvent (catalog de medicamente).
 - **Frontend modern** Thymeleaf + Bootstrap 5 (homepage hero, listă programări tip timeline, fișe în acordeon, grilă de medicamente), cu validare și pagini de eroare custom.
-- **Securitate** — login, 3 roluri (ADMIN/DOCTOR/PATIENT), BCrypt, remember-me, CSRF, autorizare pe rol.
+- **Securitate** — login JWT via identity-service, validare locală în serviciile de business, propagare token Feign (BR-4), autorizare pe rol (`@PreAuthorize`).
 - **Paginare și sortare** pe listele principale (≥2 criterii), configurabile.
 - **Multi-environment** — profiluri `dev` (PostgreSQL), `test` (H2) și `demo` (H2, rulare fără infrastructură).
 - **Logging** SLF4J + Logback, cu fișier separat pentru erori.
