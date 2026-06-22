@@ -40,7 +40,7 @@ erDiagram
 |---|---|---|
 | `common-lib` | — | DTO-uri, `JwtUtil`, interfețe Feign, model erori, excepții (partajat) |
 | `discovery-server` | 8761 | Eureka — service registry |
-| `api-gateway` | 8080 | Spring Cloud Gateway — routing, rate limiting, filtru JWT |
+| `api-gateway` | 8080 | Spring Cloud Gateway — routing, rate limiting, filtru JWT **(implementat)** |
 | `web-ui` | 8090 | Frontend Thymeleaf + Bootstrap |
 | `identity-service` | 8081 | Utilizatori, roluri, profiluri, autentificare, emitere JWT **(implementat)** |
 | `appointment-service` | 8082 | Programări (rezervare/anulare/finalizare) |
@@ -105,6 +105,53 @@ curl -s -X POST http://localhost:8081/auth/login \
 | GET | `/internal/users/{id}` | `UserDto` |
 
 > web-ui folosește încă login in-memory; integrarea cu identity-service vine în Faza 4 (Dev A).
+
+## API Gateway (port 8080)
+
+Punct unic de intrare: validează JWT, rate limiting Redis, rutează către microservicii.
+
+| Prefix gateway | Serviciu | Exemplu |
+|---|---|---|
+| `/identity/**` | identity-service :8081 | `POST /identity/auth/login` → `/auth/login` |
+| `/appointments/**` | appointment-service :8082 | `GET /appointments/api/appointments` |
+| `/records/**` | medical-records-service :8083 | `GET /records/api/records` |
+| `/**` | web-ui :8090 | proxy UI (opțional) |
+
+**Pornire** (Redis din `docker compose` trebuie să ruleze; identity + appointment min.):
+
+```bash
+docker run --rm -p 8080:8080 \
+  -v "$(pwd)":/workspace -w /workspace \
+  -e REDIS_HOST=host.docker.internal \
+  -e IDENTITY_URI=http://host.docker.internal:8081 \
+  -e APPOINTMENT_URI=http://host.docker.internal:8082 \
+  -e RECORDS_URI=http://host.docker.internal:8083 \
+  -e WEB_UI_URI=http://host.docker.internal:8090 \
+  maven:3.9-eclipse-temurin-21 bash -c \
+  "mvn -pl api-gateway -am package -DskipTests && java -jar api-gateway/target/api-gateway-1.0.0.jar"
+```
+
+> **Mac / Docker:** din container, `localhost:8081` e containerul gateway, nu hostul. Folosește `host.docker.internal` ca mai sus. Alternativ, rulează gateway **local** (fără Docker): `java -jar api-gateway/target/api-gateway-1.0.0.jar` — atunci `localhost:8081` funcționează.
+
+**Teste rapide:**
+
+```bash
+# 1. Login prin gateway (public, fără JWT)
+curl -s -X POST http://localhost:8080/identity/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"username":"doctor","password":"doctor"}'
+
+# 2. Salvează tokenul, apoi API protejat
+TOKEN="<token>"
+curl -s http://localhost:8080/appointments/api/appointments \
+  -H "Authorization: Bearer $TOKEN"
+
+# 3. Fără token → 401
+curl -s -o /dev/null -w "HTTP %{http_code}\n" \
+  http://localhost:8080/appointments/api/appointments
+```
+
+> UI-ul rămâne pe **8090** direct până la Faza 4; gateway testezi cu `curl` sau Postman.
 
 ## Interfață utilizator (web-ui)
 
@@ -276,6 +323,7 @@ mvn verify        # rulează unit + integration tests și generează rapoarte Ja
 - **Logging** SLF4J + Logback, cu fișier separat pentru erori.
 - **Service discovery** — `discovery-server` (Eureka, port 8761) pentru înregistrarea microserviciilor.
 - **Autentificare JWT** — `identity-service` (login/register, CRUD users/doctors/patients, contract `/internal` pentru Feign).
+- **API Gateway** — routing centralizat, validare JWT, rate limiting Redis (port 8080).
 - **Containerizare** — `docker-compose` pentru servicii + PostgreSQL + Redis.
 - **Testare** — teste unitare (JUnit 5 + Mockito, >70% pe service layer) și de integrare (MockMvc + H2).
 
