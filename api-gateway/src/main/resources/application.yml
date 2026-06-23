@@ -38,6 +38,9 @@ spring:
           uri: ${WEB_UI_URI:http://localhost:8090}
           predicates:
             - Path=/**
+          filters:
+            # Keep the browser Host (localhost:8080) so web-ui redirects stay reachable.
+            - PreserveHostHeader
 
 server:
   port: 8080

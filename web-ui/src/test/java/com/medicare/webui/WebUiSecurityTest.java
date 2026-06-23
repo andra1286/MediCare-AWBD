@@ -53,4 +53,11 @@ class WebUiSecurityTest {
         mockMvc.perform(get("/medications/new"))
                 .andExpect(status().isForbidden());
     }
+
+    @Test
+    @WithMockUser(username = "patient", roles = "PATIENT")
+    void patientCannotOpenMedicalRecords() throws Exception {
+        mockMvc.perform(get("/records"))
+                .andExpect(status().isForbidden());
+    }
 }

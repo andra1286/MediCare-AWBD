@@ -27,7 +27,7 @@
                     <a class="nav-link" th:classappend="${active == 'appointments'} ? 'active'"
                        th:href="@{/appointments}"><i class="bi bi-calendar2-check"></i> Appointments</a>
                 </li>
-                <li class="nav-item">
+                <li class="nav-item" sec:authorize="hasAnyRole('ADMIN','DOCTOR')">
                     <a class="nav-link" th:classappend="${active == 'records'} ? 'active'"
                        th:href="@{/records}"><i class="bi bi-file-medical"></i> Medical Records</a>
                 </li>
