@@ -1,5 +1,6 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head th:replace="~{fragments/fragments :: head('Book appointment - MediCare')}"></head>
 <body>
 <nav th:replace="~{fragments/fragments :: navbar('appointments')}"></nav>
@@ -12,15 +13,25 @@
     <div class="mc-card p-4">
     <form th:action="@{/appointments}" th:object="${appointmentForm}" method="post" novalidate>
         <div class="mb-3">
-            <label class="form-label" for="doctorId">Doctor ID</label>
-            <input class="form-control" id="doctorId" type="number" th:field="*{doctorId}" required min="1"
-                   th:classappend="${#fields.hasErrors('doctorId')} ? 'is-invalid'"/>
+            <label class="form-label" for="doctorId">Doctor</label>
+            <select class="form-select" id="doctorId" th:field="*{doctorId}" required
+                    th:classappend="${#fields.hasErrors('doctorId')} ? 'is-invalid'">
+                <option value="">— Select doctor —</option>
+                <option th:each="d : ${doctors}" th:value="${d.id}"
+                        th:text="${d.fullName + ' (' + d.specialty + ')'}">Doctor</option>
+            </select>
             <div class="invalid-feedback" th:if="${#fields.hasErrors('doctorId')}" th:errors="*{doctorId}"></div>
         </div>
         <div class="mb-3">
-            <label class="form-label" for="patientId">Patient ID</label>
-            <input class="form-control" id="patientId" type="number" th:field="*{patientId}" required min="1"
-                   th:classappend="${#fields.hasErrors('patientId')} ? 'is-invalid'"/>
+            <label class="form-label" for="patientId">Patient</label>
+            <select class="form-select" id="patientId" th:field="*{patientId}" required
+                    th:disabled="${patientLocked}"
+                    th:classappend="${#fields.hasErrors('patientId')} ? 'is-invalid'">
+                <option value="">— Select patient —</option>
+                <option th:each="p : ${patients}" th:value="${p.id}"
+                        th:text="${p.fullName + ' (' + p.personalId + ')'}">Patient</option>
+            </select>
+            <input th:if="${patientLocked}" type="hidden" th:field="*{patientId}"/>
             <div class="invalid-feedback" th:if="${#fields.hasErrors('patientId')}" th:errors="*{patientId}"></div>
         </div>
         <div class="mb-3">

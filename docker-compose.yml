@@ -1,8 +1,13 @@
-# MediCare — Dev B slice (domain services + UI) on real PostgreSQL + Redis.
-# Dev A extends this later with discovery-server (Eureka), identity-service and api-gateway.
+# MediCare — full stack (Dev A + Dev B) via Docker Compose.
 #
 #   docker compose up --build
-#   open http://localhost:8090   (admin/admin, doctor/doctor, patient/patient)
+#   open http://localhost:8090        (web-ui — admin/admin, doctor/doctor, patient/patient)
+#   open http://localhost:8761        (Eureka dashboard)
+#   open http://localhost:8080/identity/auth/login  (API gateway → identity)
+#
+# Stop any old manual containers on 8080/8081 before starting (port conflicts).
+
+x-jwt-secret: &jwt-secret MedicareDevSecretKeyMustBeAtLeast32Chars!!
 
 services:
   postgres:
@@ -31,6 +36,36 @@ services:
       timeout: 3s
       retries: 10
 
+  discovery-server:
+    build:
+      context: .
+      dockerfile: discovery-server/Dockerfile
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+    ports:
+      - "8761:8761"
+
+  identity-service:
+    build:
+      context: .
+      dockerfile: identity-service/Dockerfile
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: medicare_identity
+      DB_USER: medicare
+      DB_PASSWORD: medicare
+      EUREKA_ENABLED: "true"
+      EUREKA_URL: http://discovery-server:8761/eureka/
+      JWT_SECRET: *jwt-secret
+    depends_on:
+      postgres:
+        condition: service_healthy
+      discovery-server:
+        condition: service_started
+    ports:
+      - "8081:8081"
+
   appointment-service:
     build:
       context: .
@@ -43,12 +78,16 @@ services:
       DB_PASSWORD: medicare
       REDIS_HOST: redis
       CACHE_TYPE: redis
-      EUREKA_ENABLED: "false"
+      EUREKA_ENABLED: "true"
+      EUREKA_URL: http://discovery-server:8761/eureka/
+      JWT_SECRET: *jwt-secret
     depends_on:
       postgres:
         condition: service_healthy
       redis:
         condition: service_healthy
+      discovery-server:
+        condition: service_started
     ports:
       - "8082:8082"
 
@@ -64,26 +103,64 @@ services:
       DB_PASSWORD: medicare
       REDIS_HOST: redis
       CACHE_TYPE: redis
-      EUREKA_ENABLED: "false"
-      # talk directly to appointment-service (rule BR-13 works live)
-      APPOINTMENT_URL: http://appointment-service:8082
+      EUREKA_ENABLED: "true"
+      EUREKA_URL: http://discovery-server:8761/eureka/
+      JWT_SECRET: *jwt-secret
     depends_on:
       postgres:
         condition: service_healthy
       redis:
         condition: service_healthy
+      discovery-server:
+        condition: service_started
+      appointment-service:
+        condition: service_started
     ports:
       - "8083:8083"
+
+  api-gateway:
+    build:
+      context: .
+      dockerfile: api-gateway/Dockerfile
+    environment:
+      REDIS_HOST: redis
+      EUREKA_ENABLED: "true"
+      EUREKA_URL: http://discovery-server:8761/eureka/
+      IDENTITY_URI: lb://identity-service
+      APPOINTMENT_URI: lb://appointment-service
+      RECORDS_URI: lb://medical-records-service
+      WEB_UI_URI: http://web-ui:8090
+      JWT_SECRET: *jwt-secret
+    depends_on:
+      redis:
+        condition: service_healthy
+      discovery-server:
+        condition: service_started
+      identity-service:
+        condition: service_started
+      appointment-service:
+        condition: service_started
+      medical-records-service:
+        condition: service_started
+    ports:
+      - "8080:8080"
 
   web-ui:
     build:
       context: .
       dockerfile: web-ui/Dockerfile
     environment:
+      # Direct internal URLs — login is reliable without waiting for Eureka + gateway lb://
+      IDENTITY_URL: http://identity-service:8081
       APPOINTMENT_URL: http://appointment-service:8082
       RECORDS_URL: http://medical-records-service:8083
+      JWT_SECRET: *jwt-secret
     depends_on:
-      - appointment-service
-      - medical-records-service
+      identity-service:
+        condition: service_started
+      appointment-service:
+        condition: service_started
+      medical-records-service:
+        condition: service_started
     ports:
       - "8090:8090"

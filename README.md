@@ -62,6 +62,33 @@ Frontend modern cu temă medicală, construit cu **Thymeleaf + Bootstrap 5** (fo
 
 > Utilizatori demo: `admin/admin`, `doctor/doctor`, `patient/patient`.
 
+## Identity service (autentificare + utilizatori)
+
+Serviciu separat (`identity-service`, port 8081) pentru conturi, roluri și profiluri:
+
+- **Login / register** — emite JWT la autentificare.
+- **CRUD utilizatori, doctori, pacienți** — cu roluri ADMIN / DOCTOR / PATIENT.
+- **Contract Feign** (`/internal`) — validare doctor/pacient pentru celelalte servicii.
+- **Seed la pornire** — utilizatori demo: `admin/admin`, `doctor/doctor`, `patient/patient`.
+
+## API Gateway (port 8080)
+
+Punct unic de intrare pentru API-uri externe:
+
+- **Routing** către identity, appointment și medical-records (`/identity/**`, `/appointments/**`, `/records/**`).
+- **Validare JWT** pe rutele protejate; login/register rămân publice.
+- **Rate limiting** Redis.
+
+## Eureka (discovery-server)
+
+Registry Netflix Eureka (port 8761). Microserviciile se înregistrează aici; gateway-ul și Feign folosesc service discovery pentru apeluri `lb://`.
+
+Dashboard: **http://localhost:8761**
+
+## Securitate JWT (servicii de business)
+
+`appointment-service` și `medical-records-service` validează token-ul local și aplică autorizare pe rol (`@PreAuthorize`). Token-ul este propagat automat la apelurile Feign între servicii.
+
 ## Cerințe de build (IMPORTANT)
 
 - **Java 21 (LTS)** — proiectul **trebuie** compilat cu JDK 21. Versiuni mai noi (ex. 25) nu sunt compatibile cu procesorul de adnotări Lombok folosit aici.
@@ -103,16 +130,23 @@ Apoi deschide **http://localhost:8090** și autentifică-te cu unul dintre utili
 
 ## Rulare cu Docker Compose (recomandat)
 
-Pornește întreaga aplicație (PostgreSQL + Redis + cele 3 servicii) cu o singură comandă — necesită doar Docker:
+Pornește întreaga aplicație (PostgreSQL + Redis + toate microserviciile) cu o singură comandă — necesită doar Docker:
 
 ```bash
 docker compose up --build
 ```
 
 Apoi deschide **http://localhost:8090** și autentifică-te (`admin/admin`, `doctor/doctor`, `patient/patient`).
+
+| URL | Serviciu |
+|---|---|
+| http://localhost:8090 | Web UI |
+| http://localhost:8761 | Eureka |
+| http://localhost:8080 | API Gateway |
+
 Oprire: `docker compose down` (adaugă `-v` pentru a șterge și datele).
 
-> `docker-compose.yml` pornește serviciile de business (appointment, records), web-ui, PostgreSQL și Redis. Serviciile de platformă (Eureka, identity-service, API Gateway) se adaugă pe măsură ce sunt implementate.
+> La prima pornire așteaptă ~1 minut până toate serviciile Spring Boot sunt UP.
 
 ## Rulare demo (fără Docker, fără infrastructură — H2 în memorie)
 
@@ -124,9 +158,21 @@ java -jar medical-records-service/target/medical-records-service-1.0.0.jar --spr
 java -jar web-ui/target/web-ui-1.0.0.jar   # :8090
 ```
 
-> În ambele moduri, apelurile către identity-service (în curs de implementare) cad pe fallback-ul Resilience4j, deci aplicația rămâne complet utilizabilă.
+> Pentru profilul `demo`, identity-service nu este inclus; apelurile Feign cad pe fallback-ul Resilience4j.
 
 ## API REST
+
+**identity-service** (`:8081`)
+
+| Metodă | Endpoint | Descriere |
+|---|---|---|
+| POST | `/auth/login` | Login → JWT |
+| POST | `/auth/register` | Înregistrare pacient |
+| GET/POST/PUT/DELETE | `/api/users[/{id}]` | CRUD utilizatori |
+| GET/POST/DELETE | `/api/doctors[/{id}]` | CRUD profiluri doctor |
+| GET/POST/DELETE | `/api/patients[/{id}]` | CRUD profiluri pacient |
+| GET | `/internal/doctors/{id}` | Contract Feign — validare doctor |
+| GET | `/internal/patients/{id}` | Contract Feign — validare pacient |
 
 **appointment-service** (`:8082`)
 
@@ -168,14 +214,16 @@ mvn verify        # rulează unit + integration tests și generează rapoarte Ja
 - **Comunicare între microservicii** prin OpenFeign, rezilientă cu Resilience4j (circuit breaker + retry + fallback).
 - **Caching** cu Redis pentru datele citite frecvent (catalog de medicamente).
 - **Frontend modern** Thymeleaf + Bootstrap 5 (homepage hero, listă programări tip timeline, fișe în acordeon, grilă de medicamente), cu validare și pagini de eroare custom.
-- **Securitate** — login, 3 roluri (ADMIN/DOCTOR/PATIENT), BCrypt, remember-me, CSRF, autorizare pe rol.
+- **Securitate** — login JWT via identity-service, validare locală în serviciile de business, autorizare pe rol.
 - **Paginare și sortare** pe listele principale (≥2 criterii), configurabile.
 - **Multi-environment** — profiluri `dev` (PostgreSQL), `test` (H2) și `demo` (H2, rulare fără infrastructură).
 - **Logging** SLF4J + Logback, cu fișier separat pentru erori.
-- **Containerizare** — `docker-compose` pentru servicii + PostgreSQL + Redis.
+- **Service discovery** — Eureka (`discovery-server`, port 8761).
+- **API Gateway** — routing centralizat, JWT, rate limiting (port 8080).
+- **Containerizare** — `docker-compose` pentru stack complet (PostgreSQL, Redis, toate microserviciile).
 - **Testare** — teste unitare (JUnit 5 + Mockito, >70% pe service layer) și de integrare (MockMvc + H2).
 
 ## Contribuții echipă
 
 - **andra1286** — `common-lib`, `appointment-service`, `medical-records-service`, `web-ui` (frontend), comunicare Feign + Resilience4j + caching Redis, teste de integrare, profil `demo`, `docker-compose`.
-- *(membru 2 — de completat pe măsură ce contribuie)*
+- **[nume]** — `discovery-server`, `identity-service`, `api-gateway`, securitate JWT pe serviciile de business, integrare web-ui cu identity-service, extindere `docker-compose` (stack complet).

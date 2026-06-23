@@ -1,8 +1,10 @@
 package com.medicare.webui;
 
 import com.medicare.common.dto.AppointmentDto;
+import com.medicare.common.dto.DoctorDto;
 import com.medicare.common.dto.PageResponse;
 import com.medicare.webui.client.AppointmentApiClient;
+import com.medicare.webui.client.IdentityApiClient;
 import com.medicare.webui.client.MedicalRecordApiClient;
 import com.medicare.webui.client.MedicationApiClient;
 import com.medicare.webui.dto.MedicationView;
@@ -39,6 +41,8 @@ class WebUiPagesTest {
     private MedicationApiClient medicationApiClient;
     @MockBean
     private MedicalRecordApiClient medicalRecordApiClient;
+    @MockBean
+    private IdentityApiClient identityApiClient;
 
     private <T> PageResponse<T> emptyPage() {
         return new PageResponse<>(List.of(), 0, 10, 0, 0, true);
@@ -55,6 +59,9 @@ class WebUiPagesTest {
     @Test
     @WithMockUser(roles = "DOCTOR")
     void appointmentFormRenders() throws Exception {
+        when(identityApiClient.listDoctorsForSelect()).thenReturn(List.of(
+                new DoctorDto(1L, 2L, "Dr. Ana Popescu", "General Medicine", "DOC-001")));
+        when(identityApiClient.listPatientsForSelect()).thenReturn(List.of());
         mockMvc.perform(get("/appointments/new")).andExpect(status().isOk());
     }
 

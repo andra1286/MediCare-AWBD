@@ -1,41 +1,37 @@
 package com.medicare.webui.config;
 
+import com.medicare.webui.security.IdentityAuthenticationProvider;
+import com.medicare.webui.security.JwtRememberMeServices;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
-import org.springframework.security.core.userdetails.User;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.security.provisioning.InMemoryUserDetailsManager;
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.web.SecurityFilterChain;
 
 /**
- * Web UI security (mandatory Spring Security requirement):
- * custom login page, 3 roles, BCrypt, remember-me, CSRF (default on), logout, role-based access.
- * <p>
- * DEV NOTE: users are in-memory here so the UI runs standalone. Dev A replaces this with
- * authentication against identity-service (JDBC + JWT) without changing the templates.
+ * Web UI security: login via identity-service, role-based access, remember-me, CSRF.
  */
 @Configuration
+@EnableWebSecurity
 public class SecurityConfig {
 
-    @Bean
-    public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
+    private final IdentityAuthenticationProvider identityAuthenticationProvider;
+    private final JwtRememberMeServices jwtRememberMeServices;
+
+    public SecurityConfig(IdentityAuthenticationProvider identityAuthenticationProvider,
+                          JwtRememberMeServices jwtRememberMeServices) {
+        this.identityAuthenticationProvider = identityAuthenticationProvider;
+        this.jwtRememberMeServices = jwtRememberMeServices;
     }
 
-    /** Three demo users, one per role, with BCrypt-hashed passwords. */
     @Bean
-    public InMemoryUserDetailsManager userDetailsManager(PasswordEncoder encoder) {
-        UserDetails admin = User.withUsername("admin")
-                .password(encoder.encode("admin")).roles("ADMIN").build();
-        UserDetails doctor = User.withUsername("doctor")
-                .password(encoder.encode("doctor")).roles("DOCTOR").build();
-        UserDetails patient = User.withUsername("patient")
-                .password(encoder.encode("patient")).roles("PATIENT").build();
-        return new InMemoryUserDetailsManager(admin, doctor, patient);
+    public AuthenticationManager authenticationManager(HttpSecurity http) throws Exception {
+        AuthenticationManagerBuilder builder = http.getSharedObject(AuthenticationManagerBuilder.class);
+        builder.authenticationProvider(identityAuthenticationProvider);
+        return builder.build();
     }
 
     @Bean
@@ -44,8 +40,11 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/login", "/css/**", "/js/**", "/webjars/**", "/error").permitAll()
                         .requestMatchers("/actuator/**").permitAll()
-                        // Only ADMIN may change the medication catalog (create/edit/update/delete).
-                        // Viewing the catalog list stays available to any authenticated user.
+                        .requestMatchers("/users/**").hasRole("ADMIN")
+                        .requestMatchers("/doctors/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/patients/**").hasAnyRole("ADMIN", "DOCTOR")
+                        .requestMatchers("/patients/**").hasRole("ADMIN")
+                        .requestMatchers("/records/**").hasAnyRole("ADMIN", "DOCTOR")
                         .requestMatchers(HttpMethod.GET, "/medications/new", "/medications/*/edit")
                             .hasRole("ADMIN")
                         .requestMatchers(HttpMethod.POST, "/medications", "/medications/**")
@@ -57,9 +56,10 @@ public class SecurityConfig {
                         .permitAll())
                 .logout(logout -> logout
                         .logoutSuccessUrl("/login?logout")
+                        .addLogoutHandler((request, response, auth) ->
+                                JwtRememberMeServices.logout(response))
                         .permitAll())
-                .rememberMe(rm -> rm.key("medicare-remember-me-key").tokenValiditySeconds(86400));
-        // Access-denied (403) and not-found (404) flow to the single generic error.html.
+                .rememberMe(rm -> rm.rememberMeServices(jwtRememberMeServices));
         return http.build();
     }
 }

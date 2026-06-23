@@ -1,2 +1,3 @@
--- Postgres creates medicare_appointment via POSTGRES_DB; create the second DB here.
+-- Postgres creates medicare_appointment via POSTGRES_DB; create the other schemas here.
 CREATE DATABASE medicare_records;
+CREATE DATABASE medicare_identity;

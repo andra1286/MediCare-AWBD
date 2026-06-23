@@ -13,6 +13,11 @@ spring:
 server:
   port: 8082
 
+medicare:
+  jwt:
+    secret: ${JWT_SECRET:MedicareDevSecretKeyMustBeAtLeast32Chars!!}
+    expiration-ms: ${JWT_EXPIRATION_MS:86400000}
+
 # Eureka registration. Disabled by default so the service runs standalone in dev;
 # Docker Compose (Dev A) sets EUREKA_ENABLED=true and the registry URL.
 eureka:

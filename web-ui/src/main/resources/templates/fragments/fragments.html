@@ -27,13 +27,25 @@
                     <a class="nav-link" th:classappend="${active == 'appointments'} ? 'active'"
                        th:href="@{/appointments}"><i class="bi bi-calendar2-check"></i> Appointments</a>
                 </li>
-                <li class="nav-item">
+                <li class="nav-item" sec:authorize="hasAnyRole('ADMIN','DOCTOR')">
                     <a class="nav-link" th:classappend="${active == 'records'} ? 'active'"
                        th:href="@{/records}"><i class="bi bi-file-medical"></i> Medical Records</a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link" th:classappend="${active == 'medications'} ? 'active'"
                        th:href="@{/medications}"><i class="bi bi-capsule"></i> Medications</a>
+                </li>
+                <li class="nav-item" sec:authorize="hasAnyRole('ADMIN','DOCTOR')">
+                    <a class="nav-link" th:classappend="${active == 'patients'} ? 'active'"
+                       th:href="@{/patients}"><i class="bi bi-people"></i> Patients</a>
+                </li>
+                <li class="nav-item" sec:authorize="hasRole('ADMIN')">
+                    <a class="nav-link" th:classappend="${active == 'doctors'} ? 'active'"
+                       th:href="@{/doctors}"><i class="bi bi-person-badge"></i> Doctors</a>
+                </li>
+                <li class="nav-item" sec:authorize="hasRole('ADMIN')">
+                    <a class="nav-link" th:classappend="${active == 'users'} ? 'active'"
+                       th:href="@{/users}"><i class="bi bi-shield-lock"></i> Users</a>
                 </li>
             </ul>
             <span class="mc-userchip me-3">

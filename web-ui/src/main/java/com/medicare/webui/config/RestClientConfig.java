@@ -1,26 +1,51 @@
 package com.medicare.webui.config;
 
+import com.medicare.webui.security.JwtBearerInterceptor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.client.RestClient;
 
 /**
- * RestClient beans pointing at the backend services. URLs are configurable so the UI
+ * RestClient beans pointing at backend services. URLs are configurable so the UI
  * can talk to the services directly (dev) or through the gateway (full deployment).
  */
 @Configuration
 public class RestClientConfig {
 
     @Bean
-    public RestClient appointmentRestClient(
-            @Value("${medicare.appointment.url:http://localhost:8082}") String baseUrl) {
+    public RestClient identityAuthRestClient(
+            @Value("${medicare.identity.url:http://localhost:8081}") String baseUrl) {
         return RestClient.builder().baseUrl(baseUrl).build();
     }
 
     @Bean
+    public RestClient identityRestClient(
+            @Value("${medicare.identity.url:http://localhost:8081}") String baseUrl,
+            JwtBearerInterceptor jwtBearerInterceptor) {
+        return RestClient.builder()
+                .baseUrl(baseUrl)
+                .requestInterceptor(jwtBearerInterceptor)
+                .build();
+    }
+
+    @Bean
+    public RestClient appointmentRestClient(
+            @Value("${medicare.appointment.url:http://localhost:8082}") String baseUrl,
+            JwtBearerInterceptor jwtBearerInterceptor) {
+        return RestClient.builder()
+                .baseUrl(baseUrl)
+                .requestInterceptor(jwtBearerInterceptor)
+                .build();
+    }
+
+    @Bean
     public RestClient recordsRestClient(
-            @Value("${medicare.records.url:http://localhost:8083}") String baseUrl) {
-        return RestClient.builder().baseUrl(baseUrl).build();
+            @Value("${medicare.records.url:http://localhost:8083}") String baseUrl,
+            JwtBearerInterceptor jwtBearerInterceptor) {
+        return RestClient.builder()
+                .baseUrl(baseUrl)
+                .requestInterceptor(jwtBearerInterceptor)
+                .build();
     }
 }

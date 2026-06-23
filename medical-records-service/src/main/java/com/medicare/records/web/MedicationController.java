@@ -10,6 +10,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -30,34 +31,40 @@ public class MedicationController {
     private final MedicationService service;
 
     @PostMapping
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<MedicationDto> create(@Valid @RequestBody CreateMedicationRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED).body(service.create(request));
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("isAuthenticated()")
     public MedicationDto getById(@PathVariable Long id) {
         return service.getById(id);
     }
 
     /** Whole catalog (cached in Redis) — handy for UI dropdowns. */
     @GetMapping("/all")
+    @PreAuthorize("isAuthenticated()")
     public List<MedicationDto> listAll() {
         return service.listAll();
     }
 
     /** Paginated + sortable (e.g. ?page=0&size=10&sort=name,asc&sort=atcCode). */
     @GetMapping
+    @PreAuthorize("isAuthenticated()")
     public PageResponse<MedicationDto> list(
             @PageableDefault(size = 10, sort = "name") Pageable pageable) {
         return service.list(pageable);
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public MedicationDto update(@PathVariable Long id, @Valid @RequestBody CreateMedicationRequest request) {
         return service.update(id, request);
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         service.delete(id);
         return ResponseEntity.noContent().build();

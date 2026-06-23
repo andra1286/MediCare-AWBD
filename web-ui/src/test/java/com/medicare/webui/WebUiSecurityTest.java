@@ -1,9 +1,11 @@
 package com.medicare.webui;
 
+import com.medicare.webui.client.IdentityApiClient;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -21,6 +23,9 @@ class WebUiSecurityTest {
 
     @Autowired
     private MockMvc mockMvc;
+
+    @MockBean
+    private IdentityApiClient identityApiClient;
 
     @Test
     void loginPageIsPublic() throws Exception {
@@ -46,6 +51,13 @@ class WebUiSecurityTest {
     @WithMockUser(username = "patient", roles = "PATIENT")
     void patientCannotOpenNewMedicationForm() throws Exception {
         mockMvc.perform(get("/medications/new"))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @WithMockUser(username = "patient", roles = "PATIENT")
+    void patientCannotOpenMedicalRecords() throws Exception {
+        mockMvc.perform(get("/records"))
                 .andExpect(status().isForbidden());
     }
 }

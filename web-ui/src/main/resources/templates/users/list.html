@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head th:replace="~{fragments/fragments :: head('Users - MediCare')}"></head>
+<body>
+<nav th:replace="~{fragments/fragments :: navbar('users')}"></nav>
+<div th:replace="~{fragments/fragments :: alerts}"></div>
+
+<div class="container">
+    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+        <div>
+            <h2 class="mc-page-title mb-0"><i class="bi bi-shield-lock text-primary"></i> Users</h2>
+            <span class="mc-page-sub">Accounts and roles (identity-service)</span>
+        </div>
+        <a class="btn btn-primary" th:href="@{/users/new}">
+            <i class="bi bi-plus-lg"></i> New user</a>
+    </div>
+
+    <div th:if="${page.content.isEmpty()}" class="empty-state mc-card">
+        <i class="bi bi-shield-lock d-block"></i>
+        <p class="mt-2 mb-0">No users yet.</p>
+    </div>
+
+    <div class="table-responsive mc-card" th:if="${!page.content.isEmpty()}">
+        <table class="table table-hover mb-0 align-middle">
+            <thead class="table-light">
+            <tr>
+                <th>ID</th>
+                <th>Username</th>
+                <th>Email</th>
+                <th>Roles</th>
+                <th>Enabled</th>
+                <th></th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="u : ${page.content}">
+                <td th:text="${u.id}">1</td>
+                <td th:text="${u.username}">admin</td>
+                <td th:text="${u.email}">email</td>
+                <td><span class="badge text-bg-secondary me-1" th:each="r : ${u.roles}" th:text="${r}">ROLE</span></td>
+                <td>
+                    <span th:if="${u.enabled}" class="badge text-bg-success">Yes</span>
+                    <span th:unless="${u.enabled}" class="badge text-bg-danger">No</span>
+                </td>
+                <td class="text-end text-nowrap">
+                    <a class="btn btn-sm btn-outline-primary" th:href="@{'/users/' + ${u.id} + '/edit'}">
+                        <i class="bi bi-pencil"></i></a>
+                    <form th:action="@{'/users/' + ${u.id} + '/delete'}" method="post" class="d-inline"
+                          onsubmit="return confirm('Delete this user?');">
+                        <button class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
+                    </form>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <nav th:replace="~{fragments/fragments :: pagination(${page}, '/users', ${sort}, ${size})}"></nav>
+</div>
+<th:block th:replace="~{fragments/fragments :: scripts}"></th:block>
+</body>
+</html>
