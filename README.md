@@ -225,5 +225,5 @@ mvn verify        # rulează unit + integration tests și generează rapoarte Ja
 
 ## Contribuții echipă
 
-- **andra1286** — `common-lib`, `appointment-service`, `medical-records-service`, `web-ui` (frontend), comunicare Feign + Resilience4j + caching Redis, teste de integrare, profil `demo`, `docker-compose`.
-- **[nume]** — `discovery-server`, `identity-service`, `api-gateway`, securitate JWT pe serviciile de business, integrare web-ui cu identity-service, extindere `docker-compose` (stack complet).
+- **Ragabeja Andra** — `common-lib`, `appointment-service`, `medical-records-service`, `web-ui` (frontend), comunicare Feign + Resilience4j + caching Redis, teste de integrare, profil `demo`, `docker-compose`.
+- **Repciuc Valentin** — `discovery-server`, `identity-service`, `api-gateway`, securitate JWT pe serviciile de business, integrare web-ui cu identity-service, extindere `docker-compose` (stack complet).
